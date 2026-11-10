@@ -1,15 +1,16 @@
 # Ephys viewer
 
-The Ephys viewer reads multichannel recordings and finds the camera trigger.
-Its preprocessing step prepares the signals for the step-triggered average.
+The Ephys viewer reads multichannel recordings and synchronizes the frames of
+Video, Pose and Behavior to them. Its preprocessing step prepares the signals for
+the event-triggered average.
 
-![Ephys viewer: a processed EMG channel with the cursor line, step markers and the channel list sorted by muscle](images/ephys-viewer.png)
+![Ephys viewer: a processed EMG channel with the cursor line, event markers and the channel list sorted by muscle](images/ephys-viewer.png)
 
 ## Opening a recording
 
 - `File > Open File` (Ctrl+O) selects one or more `.rhd`/`.rhs` files, or a
   single `.mat` file written by Save (see [Saving and reopening](#saving-and-reopening)).
-- `File > Open folder` asks for a **folder**. StepSync detects the format
+- `File > Open folder` asks for a **folder**. KineSync detects the format
   from the folder contents.
 
 ### Intan (`.rhd`, `.rhs`)
@@ -28,39 +29,64 @@ Its preprocessing step prepares the signals for the step-triggered average.
 
 Select the session folder that contains the `Record Node` folder. Reading
 needs [open-ephys-matlab-tools](https://github.com/open-ephys/open-ephys-matlab-tools)
-on the path; StepSync shows a message if it is missing.
+on the path; KineSync shows a message if it is missing.
 
-- If there are several record nodes, recordings or streams, you are asked to
-  choose one.
+- If there are several record nodes or streams, you are asked to choose one.
+- If there are several recordings, they are listed in folder order with their
+  lengths, e.g. `experiment1/recording12 (15.2 s)`, and all are selected.
+  Recordings with an empty data file (e.g. a trial stopped as soon as it
+  started) are not listed. Only the selected recordings are read.
+  Any of them can be selected; they are joined into one in time order. Time 0
+  is the start of the first selected recording, gaps between recordings are
+  kept as real time, and TTL events from all of them are kept. KineSync
+  refuses to join recordings, with a message, if two overlap in time (for
+  example recordings from different experiments, whose clock restarts), or if
+  the stream, sample rate or channels change.
+- Across a gap, Raw data is drawn as a straight line. Filtering and smoothing
+  treat the samples on either side of a gap as neighbours, so expect a short
+  edge effect there. Down-sampling leaves the gaps empty (NaN), so processed
+  data is on one regular grid and can be used for the ETA; the ETA refuses
+  Raw data with gaps.
 - Channels named `CH…` are the analog channels and are scaled to µV from the per-channel
   bit-volts value. `ADC…` channels are read but not displayed.
 
-### Camera trigger
+### Digital channels
 
-After reading, the trigger menu lists the digital channels with their pulse
-counts, widths and rates, e.g. `DIN-00: 30900 TTL, 10 ms, 100 Hz`. Choose the
-camera line to synchronize the frames (see
-[Timing and synchronization](synchronization.md)). The info line then shows,
-for example, `Rate: 20000 Hz, Length: 600.00 s` and
-`Trigger#: 59990, Freq: 100 Hz`. Until a channel is chosen, it says
-`No camera trigger selected.`
+After reading, the digital channel menu lists the digital channels with their
+pulse counts, widths and rates, e.g. `DIN-00: 30900 TTL, 10 ms, 100 Hz`.
+Choosing one draws it in yellow as a 0/1 trace on a right-hand axis, over the
+ephys trace. The first item, `Digital channel:`, hides it and the right axis. The menu
+reads `No digital channel` if the recording has none, and `No data` before a
+recording is opened. Choosing a channel does not synchronize anything.
+
+### Synchronize
+
+**Synchronize** opens the Synchronize window, which places Video, Pose and
+Behavior frames on the ephys clock by pairing digital-channel events with frame
+numbers (see [Timing and synchronization](synchronization.md#synchronize)).
+It is greyed out until the recording has digital channels and Video, Pose or
+Behavior data is open. The info line then shows, for example,
+`Rate: 20000 Hz, Length: 600.00 s` and
+`Synchronized: TTL-02 rising, 59990 anchors, 100 Hz`; otherwise it says
+`Not synchronized.`
 
 ## Controls
 
 | Control | Action |
 |---|---|
-| Info | Sample rate and length of the selected data type, and the trigger count and frequency |
-| Trigger menu | The digital channel that carries the camera trigger; `Select trigger channel` for none |
+| Info | Sample rate and length of the selected data type, and the synchronization |
+| Synchronize | Open the Synchronize window |
+| Digital channel menu | The digital channel drawn on the right axis; the first item, `Digital channel:`, hides it |
 | time | Cursor time; type a value to jump |
 | Pre-Process | Open the preprocessing window |
 | Data type | `Raw`, `Processed 1`, `Processed 2`, … |
 | ✕ | Delete the selected data type (asks first) |
 | Load Channel Map | Label channels from a CSV file |
-| Channel list | The channel to display (and to use for the STA) |
+| Channel list | The channel to display (and to use for the ETA) |
 | Sort by | Order the channel list by a column of the channel map |
 
 Click the plot to move the cursor. Raw data is drawn in blue, processed data
-in green and the preprocessing preview in yellow. Steps from the Gait viewer
+in green and the preprocessing preview in yellow. Events from the Behavior viewer
 appear as magenta circles on the ephys trace.
 
 ## Channel map
@@ -83,7 +109,7 @@ any column, for example by muscle.
 ## Preprocessing
 
 **Pre-Process** opens the preprocessing window. It processes the data type
-currently selected in the viewer, so steps can be chained (for example, a
+currently selected in the viewer, so events can be chained (for example, a
 second down-sampling of *Processed 1*). The window shows the settings of the
 selected type: the ones a processed type was made with, or the defaults
 below for `Raw`. Selecting another type also discards the preview.
@@ -132,7 +158,7 @@ frequency, or a target rate above the source rate, is rejected.
 
 **✕** deletes the selected data type. Deleting `Raw` frees memory once
 processing is done. Raw data then comes back only by opening the recording
-again. The remaining processed types are renumbered. The camera trigger and
+again. The remaining processed types are renumbered. The synchronization and
 channel names are kept, so video timing is unaffected. The button is disabled
 while the preprocessing window is open.
 

@@ -1,13 +1,15 @@
 # Sessions and files
 
-StepSync saves two kinds of files:
+KineSync saves two kinds of files:
 
 - **Session files** hold everything needed to resume work.
 - **Module files** hold one module's data, for sharing or for later analysis
-  outside StepSync.
+  outside KineSync.
 
 All `.mat` files are written in MATLAB v7.3 format and carry a `fileFormat`
-and a `formatVersion` variable, so StepSync can recognise them.
+and a `formatVersion` variable, so KineSync can recognise them. Files saved
+before the program was renamed from StepSync (`fileFormat` starting with
+`'StepSync'`) are not read.
 
 ## Sessions
 
@@ -22,17 +24,17 @@ the saved modules exactly as they were.
 
 | Variable | Contents |
 |---|---|
-| `fileFormat` | `'StepSync session'` |
-| `formatVersion` | `4` |
+| `fileFormat` | `'KineSync session'` |
+| `formatVersion` | `5` (older sessions are refused) |
 | `frameRate`, `currentTime`, `currentZoom` | Shared timing state |
 | `figures` | Window position of each saved module |
-| `video`, `ephys`, `pose`, `gait` | Module data, with control settings in `.parameters` |
+| `video`, `ephys`, `pose`, `behav` | Module data, with control settings in `.parameters` |
 
 ## Module files
 
 Each module's `File > Save` asks whether to save the **full length** or only
-the current **zoom window**. The default file name ends in `_StepSync` (or
-`_gait`), and the file a module was opened from is never overwritten.
+the current **zoom window**. The default file name ends in `_KineSync` (or
+`_behav`), and the file a module was opened from is never overwritten.
 
 ### Ephys files
 
@@ -40,8 +42,8 @@ the current **zoom window**. The default file name ends in `_StepSync` (or
 
 | Variable | Contents |
 |---|---|
-| `fileFormat`, `formatVersion` | `'StepSync Ephys'`, `1` |
-| `ephys` | Channel names and units, camera trigger, channel map, source, `timeRange` (empty for full length) |
+| `fileFormat`, `formatVersion` | `'KineSync Ephys'`, `1` |
+| `ephys` | Channel names and units, synchronization (`sync`), channel map, source, `timeRange` (empty for full length) |
 | `raw` | `data` (samples × channels), `t` (s), `sampleRate` (Hz) |
 | `processed1`, `processed2`, … | As `raw`, plus `parameters`: `FilterType`, `HighPassFreq`, `LowPassFreq`, `FiltFilt`, `Rectify`, `SmoothWindow`, `DownSampleRate`, `Source` |
 
@@ -61,22 +63,22 @@ only what you need.
 Missing values are written as `NaN`. Corrected body parts carry the
 likelihood codes described in [Pose viewer and correction](pose.md#how-it-works).
 
-### Gait files
+### Behavior files
 
-`File > Save` in the Gait viewer writes:
+`File > Save` in the Behavior viewer writes:
 
 | Variable | Contents |
 |---|---|
-| `fileFormat`, `formatVersion` | `'StepSync gait'`, `2` |
-| `gait.paw` | `name`, `rawX`, `rawY` (pixels) and thresholds of each paw |
-| `gait.mask`, `gait.maskParam` | The mask and the mask editor's settings |
-| `gait.selection` | Selected paw, trace and event type |
-| `gait.resolution`, `gait.minInterval`, `gait.frameRate` | Settings |
-| `gait.sta` | STA history |
-| `gait.filename`, `gait.source` | The pose file the paws came from |
-| `gait.timeRange` | Empty for full length |
+| `fileFormat`, `formatVersion` | `'KineSync behav'`, `2` |
+| `behav.paw` | `name`, `rawX`, `rawY` (pixels) and thresholds of each paw |
+| `behav.mask`, `behav.maskParam` | The mask and the mask editor's settings |
+| `behav.selection` | Selected paw, trace and event type |
+| `behav.resolution`, `behav.minInterval`, `behav.frameRate` | Settings |
+| `Behav.eta` | ETA history |
+| `behav.filename`, `behav.source` | The pose file the paws came from |
+| `behav.timeRange` | Empty for full length |
 
-Step events, speeds and centimetre traces are not stored. They are
+Events, speeds and centimetre traces are not stored. They are
 recalculated when the file is opened. In a zoom-window save, frames outside
 the window are set to `NaN` and masked, and the frame count is unchanged.
 
@@ -90,20 +92,20 @@ in. See [Video viewer](video.md#exporting-a-marked-video).
 `File > Export to Workspace` assigns the session object to a variable in the
 MATLAB base workspace (default name `data`; existing variables are not
 overwritten). It is the live object, so it reflects later changes in
-StepSync. Main fields:
+KineSync. Main fields:
 
 | Field | Contents |
 |---|---|
 | `data.frameRate`, `data.currentTime`, `data.currentZoom` | Shared state |
-| `data.getFrameTimes(n)` | Times (s) of video frames 1…n |
+| `data.getFrameTimes(n)` | Times (s) of frames 1…n |
 | `data.ephys.raw`, `data.ephys.processed(k)` | `data`, `t`, `sampleRate` (and `parameters`) |
 | `data.ephys.digital` | Digital channels: `name`, `rise`, `fall` edge times |
-| `data.ephys.trigger` | Chosen camera TTL: `channel`, `time`, `freq`, `number` |
+| `data.ephys.sync` | Synchronization: `method`, `frames`, `syncVideoTime`, `videoAnchor`, `ephysAnchor`, `digitalChannelName`, `edge` (see [Timing](synchronization.md#synchronize)) |
 | `data.pose.table` | Pose table: `<part>_x`, `<part>_y`, `<part>_likelihood` |
 | `data.pose.t` | Time of each pose frame |
-| `data.gait.t` | Time of each gait frame |
-| `data.gait.mask` | Logical mask (true = analysed) |
-| `data.gait.paw(i)` | `name`, `x`, `y` (cm), `speed` (cm/s), and events `rising`, `falling`, `onset`, `offset`, `peak`, `valley`, `masked` (frame indices) |
-| `data.gait.sta(j)` | STA runs: `t`, `y`, `randomMean`, `randomStd`, `sampleCount`, parameters and selections |
+| `data.behav.t` | Time of each behavior frame |
+| `data.behav.mask` | Logical mask (true = analysed) |
+| `data.behav.paw(i)` | `name`, `x`, `y` (cm), `speed` (cm/s), and events `rising`, `falling`, `onset`, `offset`, `peak`, `valley`, `masked` (frame indices) |
+| `data.behav.eta(j)` | ETA runs: `t`, `y`, `randomMean`, `randomStd`, `sampleCount`, parameters and selections |
 
-Events are only up to date for the paw and trace selected in the Gait viewer.
+Events are only up to date for the paw and trace selected in the Behavior viewer.

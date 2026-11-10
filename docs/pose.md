@@ -1,9 +1,9 @@
 # Pose viewer and correction
 
 The Pose viewer shows body-part trajectories from DeepLabCut or SLEAP and
-corrects tracking errors. The Gait viewer then uses the corrected paws.
+corrects tracking errors. The Behavior viewer then uses the corrected paws.
 
-![Pose viewer: x and y traces of a forepaw with step markers and the body-part list](images/pose-viewer.png)
+![Pose viewer: x and y traces of a forepaw with event markers and the body-part list](images/pose-viewer.png)
 
 ## Supported files
 
@@ -22,7 +22,7 @@ Each body part has *x*, *y* (in pixels) and a likelihood.
 
 A pose file may cover only part of a video, for example when the video was
 cropped in time before tracking. A DeepLabCut CSV records the original frame
-numbers in its first column, and StepSync uses them to line the pose frames
+numbers in its first column, and KineSync uses them to line the pose frames
 up with the video:
 
 - **Frames already 1…N:** used as they are.
@@ -48,7 +48,7 @@ pose file to be checked against its length.
 | Delete bodypart | Remove the selected body part from the data (asks first; the last one cannot be deleted) |
 
 The vertical axis is in image pixels and runs downwards, as in the image.
-Click a trace to move the cursor. Steps from the Gait viewer appear as
+Click a trace to move the cursor. Events from the Behavior viewer appear as
 magenta circles on the traces.
 
 ## Correcting tracking errors
@@ -75,7 +75,7 @@ and **Auto seed width**, re-estimate them. You can also type your own values.
 1. **Segmentation.** The trajectory is cut at every jump, i.e. every
    displacement larger than the jump threshold, and at every missing frame.
    This gives a series of segments within which the marker moves smoothly.
-2. **Automatic jump threshold.** StepSync builds a histogram of
+2. **Automatic jump threshold.** KineSync builds a histogram of
    log₁₀(frame-to-frame displacement). Normal movement and tracking errors
    form two modes. The threshold is the valley between them. If no clear
    valley exists, the threshold is set at median + 4 robust SD of the log
@@ -149,7 +149,7 @@ until you click **Preview** again, which asks before discarding them.
 **Save As** saves the previewed body part (preview first). It adds the corrected trajectory to the data as a new body part. The
 default name is `<bodypart>_FixJ<threshold>W<width>`, which records the
 settings used, and the original stays unchanged. The new body part can then
-be imported in the Gait viewer. Closing the correction window discards an
+be imported in the Behavior viewer. Closing the correction window discards an
 unsaved preview.
 
 To write a file, use `File > Save` in the Pose viewer.
@@ -160,5 +160,5 @@ To write a file, use `File > Save` in the Pose viewer.
 including corrected ones. You can save the full length or only the current
 zoom window. The first column keeps the original frame numbers, so a file
 saved from a zoom window lines up with the video again when reopened. The
-default name is `<file>_StepSync.csv`, and the source file cannot be
+default name is `<file>_KineSync.csv`, and the source file cannot be
 overwritten. See [Sessions and files](files.md#pose-files).

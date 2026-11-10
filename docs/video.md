@@ -1,10 +1,10 @@
 # Video viewer
 
 The Video viewer plays the behaviour video on the shared timeline. It overlays
-the selected pose marker and the detected steps, and exports a copy of the
+the selected pose marker and the detected events, and exports a copy of the
 video with those markers drawn in.
 
-![Video viewer with the pose marker (cyan +) and step rings (magenta)](images/video-viewer.png)
+![Video viewer with the pose marker (cyan +) and event rings (magenta)](images/video-viewer.png)
 
 ## Opening a video
 
@@ -36,7 +36,7 @@ at the last frame that has a time.
 |---|---|
 | Cyan **+** | The body part selected in the Pose viewer |
 | Green **o** | The corrected position previewed by Pose Fix |
-| Magenta rings | Steps of the selected paw and event type from the Gait viewer. Rings fade with their distance in time from the current frame |
+| Magenta rings | Events of the selected paw and event type from the Behavior viewer. Rings fade with their distance in time from the current frame |
 
 You can drag the cyan or green marker with the mouse to correct the position
 on the current frame. The pose data in the Pose viewer updates immediately.
@@ -47,12 +47,12 @@ on the current frame. The pose data in the Pose viewer updates immediately.
 the image:
 
 1. Choose **Full length** or **Zoom window** (the current shared zoom range).
-2. Choose the file name. The default is `<video>_StepSync.mp4`. The source
+2. Choose the file name. The default is `<video>_KineSync.mp4`. The source
    video cannot be overwritten.
 3. Enter the quality (0–100, default 80).
 
 The export keeps the original resolution and is written at the session frame
-rate. It contains the pose marker and step rings as they were when the export
+rate. It contains the pose marker and event rings as they were when the export
 started, without the green preview marker. Odd frame sizes are padded by one
 pixel, as MPEG-4 requires. While exporting, the Play button shows
 **Abort (n%)**. Aborting or closing the window keeps a playable partial file.
