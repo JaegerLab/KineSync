@@ -74,6 +74,8 @@ S.badMarker      = 'x';         % propagated bad
 S.questMarker    = 'x';         % questionable (grey)
 S.userBadMarker  = '*';         % user-made bad (user)
 S.unflagMarker   = 'o';         % never reached (grey)
+S.userAddMarker    = '+';       % point added in the video (green, on the fix)
+S.userRemoveMarker = 's';       % point removed in the video (red, on the raw trace)
 
 % needs attention: large circles at both ends
 S.attnMarker   = '^';
@@ -86,12 +88,13 @@ S.longBadFrac    = 1/3;
 S.longInterpFrac = 1;
 
 % layers the Pose auto fix checkboxes show/hide (interp and jump always show)
-S.labelLayers = {'good', 'userGood', 'bad', 'quest', 'userBad', 'unflag'};
+S.labelLayers = {'good', 'userGood', 'bad', 'quest', 'userBad', 'unflag', ...
+                 'userAdd', 'userRemove'};
 S.attnLayers  = {'attnConflict', 'attnLongBad', 'attnInterp'};
 
 % legend: order of the fix layers, and placement ('eastoutside' keeps it off the data)
 S.legendOrder = {'interp', 'jump', 'good', 'bad', 'userGood', ...
-                 'userBad', 'unflag', 'quest', 'attnConflict', 'attnLongBad', 'attnInterp'};
+                 'userBad', 'userAdd', 'userRemove', 'unflag', 'quest', 'attnConflict', 'attnLongBad', 'attnInterp'};
 S.legendLocation = 'southeast';
 
 % Displaynames for legends
@@ -106,6 +109,8 @@ S.legend.quest = 'Questionable';
 S.legend.unflag = 'Undetermined';
 S.legend.userGood = 'User confirmed';
 S.legend.userBad = 'User rejected';
+S.legend.userAdd = 'User added';
+S.legend.userRemove = 'User removed';
 S.legend.attnConflict = 'Attn: Conflict';
 S.legend.attnLongBad = 'Attn: Long bad';
 S.legend.attnInterp = 'Attn: long interp';

@@ -42,9 +42,11 @@ function [xFix, yFix, mask, seg] = pose_fix(x, y, jumpThresh, seedWidth, maskOrS
 %     visualize    true to plot the result (default false)
 %
 %   Outputs
-%     xFix, yFix interpolated (pchip) through good frames; before the
-%                  first / after the last good frame the nearest good value
-%                  is held
+%     xFix, yFix interpolated (pchip) through good frames, separately in
+%                  each run of frames that have data; missing (NaN) frames
+%                  stay NaN. Before the first / after the last good frame
+%                  of a run the nearest good value is held; a run with no
+%                  good frame keeps its raw values. See Pose.apply_point_edits.
 %     mask         logical, true for frames in good segments (flag > 0)
 %     seg          segment structure (flags, rounds, conflicts, suggestions)
 %
@@ -177,13 +179,10 @@ seg = find_conflicts(seg, x, y, P);
 
 % ---- output ----------------------------------------------------------------
 mask = Pose.pose_seg_mask(seg);
-g = mask & isfinite(x) & isfinite(y);
-if ~any(g)
+if ~any(mask & isfinite(x) & isfinite(y))
     warning('pose_fix:noGood', 'No good frames; returning the raw trace.');
-    xFix = x; yFix = y;
-else
-    [xFix, yFix] = interp_hold((1:N)', x, y, g);
 end
+[xFix, yFix] = Pose.apply_point_edits(x, y, mask, seg, []);
 
 if visualize
     plot_result(x, y, xFix, yFix, seg);
@@ -424,7 +423,7 @@ layers = { ...
 % needs attention: frames at both ends
 c = seg.stop([seg.conflict(:); false]);
 k = find((seg.flag == -1 | seg.flag == -2) & seg.len >= S.longBadFrac * win);
-d = diff([false; ~good; false]);
+d = diff([false; ~good & isfinite(xFix); false]);   % missing frames are not interpolated
 rs = find(d == 1); re = find(d == -1) - 1;
 long = (re - rs + 1) >= S.longInterpFrac * win;
 attnLayers = { ...

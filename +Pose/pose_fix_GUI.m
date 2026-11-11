@@ -6,7 +6,7 @@ function fig = pose_fix_GUI(mousePos)
     %% draw GUI
     % grid 5x2
     mousePos(2)=mousePos(2)-120;
-    fig = uifigure('Name', 'Pose auto fix', 'Position', Shared.place_window([mousePos 300 290]), ...
+    fig = uifigure('Name', 'Pose auto fix', 'Position', Shared.place_window([mousePos 300 310]), ...
         'CloseRequestFcn', @onClose);
     grid1 = uigridlayout(fig, [5 2], "RowHeight",{30,30,30,30,'1x'});
 
@@ -34,7 +34,8 @@ function fig = pose_fix_GUI(mousePos)
     txt = sprintf(['After Preview\n' ...
         'Pose :\t Ctrl-click: add/remove jump.\n' ...
         '\t\t Shift-click: confirm/reject segment.\n' ...
-        'Video:\t Drag: Refine label position.']);
+        'Video:\t Drag: Refine label position.\n' ...
+        '\t\t Ctrl-click: add point. Shift-click: remove point.']);
     uilabel(grid1, 'Text', txt , ...
         'Layout', matlab.ui.layout.GridLayoutOptions('Row', 5, 'Column', [1 2]));
 
@@ -51,7 +52,7 @@ function fig = pose_fix_GUI(mousePos)
             else 
                 msg = '';
             end
-            msg = sprintf('Discard the previous preview%s?', msg);
+            msg = sprintf('Discard the previous preview%s and its edits?', msg);
             selection = uiconfirm(fig, msg, 'Confirm Discard');
             if strcmp(selection, 'Cancel'), return; end
         end
@@ -60,17 +61,15 @@ function fig = pose_fix_GUI(mousePos)
         xdata = data.pose.table.([field '_x']);
         ydata = data.pose.table.([field '_y']);
         
-        [tempX, tempY, mask, seg] = Pose.pose_fix(xdata,ydata, ...
+        [~, ~, ~, seg] = Pose.pose_fix(xdata,ydata, ...
             jumpthresh.Value, seedwidth.Value);
 
-        data.pose.table.temp_x = tempX;
-        data.pose.table.temp_y = tempY;
-
-        data.pose.table.temp_likelihood = Pose.seg_likelihood(seg);
-
-        % segments, for display and click editing in pose_viewer
+        % segments, for display and click editing in pose_viewer; a new
+        % preview starts without point edits
         data.pose.seg = seg;
         data.pose.segBodypart = field;
+        data.pose.pointEdit = [];
+        Pose.refresh_preview(data);     % temp_x, temp_y, temp_likelihood
         data.pose.previewParameters = [jumpthresh.Value seedwidth.Value]; % for the Save As name
 
         % a new preview shows everything
@@ -148,6 +147,7 @@ function fig = pose_fix_GUI(mousePos)
         data.pose.hd = rmfield(data.pose.hd, f);
         data.pose.seg = [];
         data.pose.segBodypart = '';
+        data.pose.pointEdit = [];
         % no preview left to show or hide
         if isfield(data.pose, 'fixShow'), data.pose = rmfield(data.pose, 'fixShow'); end
         if isgraphics(fig)

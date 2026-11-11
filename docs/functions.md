@@ -119,13 +119,19 @@ what **Pose Fix** runs.
 
 | Output | Description |
 |---|---|
-| `xFix`, `yFix` | Corrected trajectory: a pchip interpolation through the good frames. Before the first and after the last good frame the nearest good value is held |
+| `xFix`, `yFix` | Corrected trajectory: a pchip interpolation through the good frames, done separately in each run of frames that have data. Missing (NaN) frames stay NaN, e.g. a tongue that is not out. Before the first and after the last good frame of a run the nearest good value is held; a run with no good frame keeps its raw values |
 | `mask` | Logical, `true` for frames in good segments |
 | `seg` | Segment structure: start, stop, length and flag of each segment, the jumps, and conflicts with suggested fixes. See `help Pose.pose_seg_build` |
 
 Segment flags in `seg.flag`: 2 seed, 1 good, 0 undetermined, −1 bad,
 −2 questionable, −3 rejected. `Pose.seg_likelihood(seg)` turns them into a
 per-frame likelihood, as used when the GUI saves a fixed body part.
+
+Point edits (ctrl-click / shift-click in the video during a preview) are kept
+in a record made by `Pose.point_edit` and applied after every run by
+`Pose.apply_point_edits(x, y, mask, seg, edit)`: an added point is used as an
+anchor and gets likelihood 1; a removed or missing frame is NaN in x, y and
+likelihood.
 
 ```matlab
 T = Pose.read_pose('video1DLC.csv');            % columns <bodypart>_x/_y/_likelihood

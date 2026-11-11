@@ -39,7 +39,10 @@ otherwise padded with NaN) and the behavior `.mat` file (round trip, zoom window
 as NaN plus mask, rejected files). `test_video` covers the marker rasterizer
 (positions, ring alpha by time, scale, grayscale, missing points) and the
 export (padding to even size, frame count and rate, abort and a writer
-closed from outside both leave a playable file).
+closed from outside both leave a playable file). `test_pose_point_edit` covers
+Pose Fix with missing points: NaN frames stay NaN, each run of frames with
+data is interpolated on its own, added/removed points and their likelihood
+(1 / NaN), and point edits surviving a re-run after a segment edit.
 
 Close KineSync before running the desktop integration test:
 
@@ -148,6 +151,11 @@ Manual checks of the video export (File > Save in the video window):
 - Abort, closing the video window, and Exit all during the export each leave
   a playable partial file; the source video cannot be chosen as output.
 - Preview a pose correction, switch body part/settings and Save As; check source identity.
+- During a preview, in the video: ctrl-click adds the green preview point at the
+  click (a green + in the Pose viewer), shift-click removes it (red square on the
+  raw trace); clicks outside the image or without a preview do nothing. Dragging
+  the green point, then shift-clicking a segment in the Pose viewer, keeps the
+  dragged position. Save As writes NaN x/y/likelihood at removed frames.
 
 Validation performed in the editing environment: MISS_HIT parsed all 38 MATLAB
 files without parser errors; 23 low-priority pre-existing name/value style notices

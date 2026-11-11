@@ -474,6 +474,12 @@ end
 % drag the markers ==========================
 function onMouseDown(~, ~)
     if exportState.running, return; end
+    % ctrl-click: add a preview point, shift-click: remove it (no drag)
+    clickType = fig.SelectionType;
+    if any(strcmp(clickType, {'alt', 'extend'}))
+        editPreviewPoint(clickType);
+        return;
+    end
     if data.has('pose')
         hd = data.video.hd;
         % begin dragging
@@ -518,12 +524,57 @@ function onMouseUp(~, ~)
             data.pose.table.([bodypart '_y'])(frameIdx) = drag.marker.YData;
             data.notifyPose('edit', {bodypart});
         elseif isequal(drag.marker, hd.poseTempMarker)
-            data.pose.table.temp_x(frameIdx) = drag.marker.XData;
-            data.pose.table.temp_y(frameIdx) = drag.marker.YData;
-            data.notifyPose('preview');
+            % a moved preview point is a point edit, so it survives a re-run
+            data.video = rmfield(data.video, 'drag');
+            setPreviewPoint(frameIdx, 'add', [drag.marker.XData drag.marker.YData]);
+            return;
         end
         data.video = rmfield(data.video, 'drag');
     end
+end
+
+% Ctrl-click ('alt') adds the preview point at the click, shift-click
+% ('extend') removes it. Only clicks on the image, and only while a Pose
+% Fix preview exists for the selected body part.
+function editPreviewPoint(clickType)
+    if ~data.has('pose') || ~isfield(data.video, 'hd') || ~isfield(data.video, 'frameIdx')
+        return;
+    end
+    hd = data.video.hd;
+    cp = hd.ax.CurrentPoint;
+    cx = cp(1,1); cy = cp(1,2);
+    xl = hd.ax.XLim; yl = hd.ax.YLim;
+    if cx < xl(1) || cx > xl(2) || cy < yl(1) || cy > yl(2), return; end
+    if strcmp(clickType, 'alt')
+        setPreviewPoint(data.video.frameIdx, 'add', [cx cy]);
+    else
+        setPreviewPoint(data.video.frameIdx, 'remove');
+    end
+end
+
+function setPreviewPoint(frameIdx, action, xy)
+    if ~previewActive(), return; end
+    N = height(data.pose.table);
+    if frameIdx < 1 || frameIdx > N, return; end
+    edit = [];
+    if isfield(data.pose, 'pointEdit'), edit = data.pose.pointEdit; end
+    if nargin < 3
+        edit = Pose.point_edit(edit, N, frameIdx, action);
+    else
+        edit = Pose.point_edit(edit, N, frameIdx, action, xy);
+    end
+    data.pose.pointEdit = edit;
+    Pose.refresh_preview(data);
+    data.notifyPose('preview');
+end
+
+% a Pose Fix preview exists for the selected body part
+function tf = previewActive()
+    tf = data.has('pose') && isfield(data.pose, 'seg') && ~isempty(data.pose.seg) && ...
+        isfield(data.pose, 'segBodypart') && ...
+        strcmp(data.pose.segBodypart, data.pose.hd.bodypart.Value) && ...
+        ismember('temp_x', data.pose.table.Properties.VariableNames) && ...
+        data.pose.seg.nFrames == height(data.pose.table);
 end
 
 function onMouseMove(~, ~)

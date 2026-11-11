@@ -98,6 +98,7 @@ function fig = pose_viewer()
         data.pose.sourceFile = filename;   % Save may not overwrite it
         data.pose.seg = [];
         data.pose.segBodypart = '';
+        data.pose.pointEdit = [];
 
         % update body part list
         hd.bodypart.Enable = 'on';
@@ -179,8 +180,9 @@ function fig = pose_viewer()
             data.pose.table = removevars(data.pose.table, temp);
             data.pose.seg = [];
             data.pose.segBodypart = '';
+            data.pose.pointEdit = [];
         end
-        cols = intersect(strcat(bodypart, {'_x', '_y', '_likelihood'}), ...
+        cols =intersect(strcat(bodypart, {'_x', '_y', '_likelihood'}), ...
             data.pose.table.Properties.VariableNames);
         data.pose.table = removevars(data.pose.table, cols);
         names = data.pose.table.Properties.UserData;
@@ -260,8 +262,11 @@ function fig = pose_viewer()
             hd = setFixVisible(hd, '_x', false);
             hd = setFixVisible(hd, '_y', false);
         else
-            hd = drawFix(hd, '_x', t, xdata, tablePose.temp_x, seg, S);
-            hd = drawFix(hd, '_y', t, ydata, tablePose.temp_y, seg, S);
+            edit = [];
+            if isfield(data.pose, 'pointEdit'), edit = data.pose.pointEdit; end
+            edit = Pose.point_edit(edit, numel(xdata));
+            hd = drawFix(hd, '_x', t, xdata, tablePose.temp_x, seg, edit, edit.addX, S);
+            hd = drawFix(hd, '_y', t, ydata, tablePose.temp_y, seg, edit, edit.addY, S);
             hd = setFixVisible(hd, '_x', hd.chkX.Value);
             hd = setFixVisible(hd, '_y', hd.chkY.Value);
 
@@ -336,7 +341,8 @@ function fig = pose_viewer()
     end
 
     % draw all fix layers for one coordinate (suffix '_x' or '_y')
-    function hd = drawFix(hd, sfx, t, v, vfix, seg, S)
+    % edit: point edit record; vAdd: its added coordinate (addX or addY)
+    function hd = drawFix(hd, sfx, t, v, vfix, seg, edit, vAdd, S)
         fe   = repelem(seg.flag, seg.len);          % flag per frame
         win  = seg.seedWidth;
         good = fe > 0;
@@ -378,6 +384,17 @@ function fig = pose_viewer()
                 'DisplayName', S.legend.(layers{i,1}));
         end
 
+        % point edits from the video: added points, and removed frames
+        % (marked on the raw trace, where they had data)
+        sel = isfinite(vAdd(:));
+        hd = Shared.myPlot(@plot, hd, ['fix_userAdd' sfx], hd.ax, ...
+            nonEmpty(t(sel)), nonEmpty(vAdd(sel)), S.userAddMarker, ...
+            'Color', S.good, mk{:}, 'DisplayName', S.legend.userAdd);
+        sel = edit.removed(:);
+        hd = Shared.myPlot(@plot, hd, ['fix_userRemove' sfx], hd.ax, ...
+            nonEmpty(t(sel)), nonEmpty(v(sel)), S.userRemoveMarker, ...
+            'Color', S.bad, mk{:}, 'DisplayName', S.legend.userRemove);
+
         % --- needs attention: large circles at both ends --------------------
         % neighbouring good segments: the two frames of the jump between them
         a = seg.stop([seg.conflict(:); false]);
@@ -392,7 +409,8 @@ function fig = pose_viewer()
             nonEmpty(t(f)), nonEmpty(v(f)), 'Color', S.attnLongBad, attn{:}, ...
             'DisplayName', S.legend.attnLongBad);
         % long interpolation with no good frame inside: ends of the stretch
-        d = diff([false; ~good; false]);
+        % (missing frames are not interpolated)
+        d = diff([false; ~good & isfinite(vfix(:)); false]);
         rs = find(d == 1); re = find(d == -1) - 1;
         long = (re - rs + 1) >= S.longInterpFrac * win;
         f = [rs(long); re(long)];
@@ -566,12 +584,10 @@ function fig = pose_viewer()
         % recheck only around the edit
         xdata = data.pose.table.([bodypart '_x']);
         ydata = data.pose.table.([bodypart '_y']);
-        [tempX, tempY, mask, seg] = Pose.pose_fix(xdata, ydata, [], [], seg);
+        [~, ~, ~, seg] = Pose.pose_fix(xdata, ydata, [], [], seg);
 
-        data.pose.table.temp_x = tempX;
-        data.pose.table.temp_y = tempY;
-        data.pose.table.temp_likelihood = Pose.seg_likelihood(seg);
         data.pose.seg = seg;
+        Pose.refresh_preview(data);     % keeps the point edits
         data.notifyPose('preview');
     end
 
