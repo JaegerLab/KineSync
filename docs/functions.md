@@ -8,7 +8,7 @@ window and no session, and return plain MATLAB data.
 |---|---|
 | [`Ephys.ephys_prep`](#ephysephys_prep) | Filter, rectify, smooth and down-sample ephys data |
 | [`Pose.pose_fix`](#posepose_fix) | Correct jumps (mislabels) in a pose trajectory |
-| [`Behav.detect_events`](#behavdetect_events) | Find events in a paw trace |
+| [`Behav.detect_events`](#behavdetect_events) | Find events in a body-part trace |
 | [`Behav.eta`](#behaveta) | Event-triggered average with a chance-level control |
 | [`Behav.plot_eta`](#behavplot_eta) | Plot a result of `Behav.eta` |
 
@@ -150,12 +150,12 @@ events = Behav.detect_events(trace, mask, threshold, minInterval)
 events = Behav.detect_events(trace, mask, threshold, minInterval, nearZero)
 ```
 
-Finds events in one paw trace (x, y or speed). The event definitions are
+Finds events in one body-part trace (x, y or speed). The event definitions are
 those of the [Behavior viewer](behavior.md#events).
 
 | Input | Description |
 |---|---|
-| `trace` | Paw trace, one value per frame |
+| `trace` | Body-part trace, one value per frame |
 | `mask` | Logical, `false` for frames to exclude. Use `true(size(trace))` for no mask |
 | `threshold` | Threshold in the units of `trace` |
 | `minInterval` | Minimum distance between peaks and valleys, in **frames** (a positive integer) |

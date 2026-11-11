@@ -24,7 +24,7 @@ for name = {'rising','falling','onset','offset','peak','valley'}
 end
 end
 
-function testIndependentPawThresholds(testCase)
+function testIndependentBodypartThresholds(testCase)
 a = Behav.detect_events([0;0;4;4;0], true(5,1), 2, 2);
 b = Behav.detect_events([10;10;14;14;10], true(5,1), 12, 2);
 verifyEqual(testCase, a.rising, b.rising);

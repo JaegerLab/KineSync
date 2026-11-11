@@ -70,12 +70,12 @@ likelihood codes described in [Pose viewer and correction](pose.md#how-it-works)
 | Variable | Contents |
 |---|---|
 | `fileFormat`, `formatVersion` | `'KineSync behav'`, `2` |
-| `behav.paw` | `name`, `rawX`, `rawY` (pixels) and thresholds of each paw |
+| `behav.bodypart` | `name`, `rawX`, `rawY` (pixels) and thresholds of each body part |
 | `behav.mask`, `behav.maskParam` | The mask and the mask editor's settings |
-| `behav.selection` | Selected paw, trace and event type |
+| `behav.selection` | Selected body part, trace and event type |
 | `behav.resolution`, `behav.minInterval`, `behav.frameRate` | Settings |
 | `Behav.eta` | ETA history |
-| `behav.filename`, `behav.source` | The pose file the paws came from |
+| `behav.filename`, `behav.source` | The pose file the body parts came from |
 | `behav.timeRange` | Empty for full length |
 
 Events, speeds and centimetre traces are not stored. They are
@@ -105,7 +105,7 @@ KineSync. Main fields:
 | `data.pose.t` | Time of each pose frame |
 | `data.behav.t` | Time of each behavior frame |
 | `data.behav.mask` | Logical mask (true = analysed) |
-| `data.behav.paw(i)` | `name`, `x`, `y` (cm), `speed` (cm/s), and events `rising`, `falling`, `onset`, `offset`, `peak`, `valley`, `masked` (frame indices) |
+| `data.behav.bodypart(i)` | `name`, `x`, `y` (cm), `speed` (cm/s), and events `rising`, `falling`, `onset`, `offset`, `peak`, `valley`, `masked` (frame indices) |
 | `data.behav.eta(j)` | ETA runs: `t`, `y`, `randomMean`, `randomStd`, `sampleCount`, parameters and selections |
 
-Events are only up to date for the paw and trace selected in the Behavior viewer.
+Events are only up to date for the body part and trace selected in the Behavior viewer.

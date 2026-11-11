@@ -36,7 +36,7 @@ at the last frame that has a time.
 |---|---|
 | Cyan **+** | The body part selected in the Pose viewer |
 | Green **o** | The corrected position previewed by Pose Fix |
-| Magenta rings | Events of the selected paw and event type from the Behavior viewer. Rings fade with their distance in time from the current frame |
+| Magenta rings | Events of the selected body part and event type from the Behavior viewer. Rings fade with their distance in time from the current frame |
 
 You can drag the cyan or green marker with the mouse to correct the position
 on the current frame. The pose data in the Pose viewer updates immediately.

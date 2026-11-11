@@ -103,10 +103,10 @@ end
 
 function g = sampleBehav()
 n = 10;
-g.paw = struct('name', {'fl', 'fr'}, 'rawX', {(1:n)', (2:n+1)'}, 'rawY', {(1:n)', (3:n+2)'}, ...
+g.bodypart = struct('name', {'fl', 'fr'}, 'rawX', {(1:n)', (2:n+1)'}, 'rawY', {(1:n)', (3:n+2)'}, ...
     'thresh', {struct('x', 5, 'y', NaN, 'speed', NaN), struct('x', NaN, 'y', NaN, 'speed', 2)}, ...
     'x', {zeros(n,1), zeros(n,1)}, 'rising', {[2 5], 3});   % computed fields are not saved
-g.selection = struct('paw', 2, 'trace', 'speed', 'event', 'onset', 'show', true);
+g.selection = struct('bodypart', 2, 'trace', 'speed', 'event', 'onset', 'show', true);
 g.mask = true(n, 1); g.mask(1) = false;
 g.maskParam = struct('Rules', table());
 g.eta = struct('ephysType', {'Raw'});
@@ -121,10 +121,10 @@ file = tempFile(testCase, '.mat');
 g = sampleBehav();
 Behav.save_behav(file, g, struct('resolution', 42, 'minInterval', 0.3), 25);
 r = Behav.read_behav(file);
-verifyEqual(testCase, {r.paw.name}, {'fl', 'fr'});
-verifyEqual(testCase, r.paw(2).rawY, g.paw(2).rawY);
-verifyEqual(testCase, r.paw(1).thresh.x, 5);
-verifyFalse(testCase, any(isfield(r.paw, {'x', 'rising'})));
+verifyEqual(testCase, {r.bodypart.name}, {'fl', 'fr'});
+verifyEqual(testCase, r.bodypart(2).rawY, g.bodypart(2).rawY);
+verifyEqual(testCase, r.bodypart(1).thresh.x, 5);
+verifyFalse(testCase, any(isfield(r.bodypart, {'x', 'rising'})));
 verifyEqual(testCase, r.selection, g.selection);
 verifyEqual(testCase, r.mask, g.mask);
 verifyEqual(testCase, [r.resolution r.minInterval r.frameRate], [42 0.3 25]);
@@ -139,9 +139,9 @@ file = tempFile(testCase, '.mat');
 Behav.save_behav(file, sampleBehav(), struct('resolution', 30, 'minInterval', 0.2), 25, [0.3 0.6]);
 r = Behav.read_behav(file);
 inside = false(10, 1); inside(4:7) = true;   % t = 0.3 .. 0.6
-verifyEqual(testCase, numel(r.paw(1).rawX), 10);
-verifyTrue(testCase, all(isnan(r.paw(1).rawX(~inside))));
-verifyEqual(testCase, r.paw(1).rawX(inside), (4:7)');
+verifyEqual(testCase, numel(r.bodypart(1).rawX), 10);
+verifyTrue(testCase, all(isnan(r.bodypart(1).rawX(~inside))));
+verifyEqual(testCase, r.bodypart(1).rawX(inside), (4:7)');
 verifyEqual(testCase, r.mask, inside);
 verifyEqual(testCase, r.timeRange, [0.3 0.6]);
 end

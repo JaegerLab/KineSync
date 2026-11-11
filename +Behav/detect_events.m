@@ -1,9 +1,9 @@
 function events = detect_events(trace, mask, threshold, minInterval, nearZero)
-%DETECT_EVENTS Calculate one paw/trace; indices always refer to original frames.
+%DETECT_EVENTS Calculate one body part/trace; indices always refer to original frames.
 % events = Behav.detect_events(trace, mask, threshold, minInterval)
 % events = Behav.detect_events(trace, mask, threshold, minInterval, nearZero)
 %
-%  trace:       paw x, y or speed, one value per frame
+%  trace:       body-part x, y or speed, one value per frame
 %  mask:        logical, false for excluded frames
 %  threshold:   threshold, in the units of trace
 %  minInterval: minimum distance between peaks/valleys (frames)

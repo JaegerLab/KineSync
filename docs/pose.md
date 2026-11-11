@@ -1,7 +1,7 @@
 # Pose viewer and correction
 
 The Pose viewer shows body-part trajectories from DeepLabCut or SLEAP and
-corrects tracking errors. The Behavior viewer then uses the corrected paws.
+corrects tracking errors. The Behavior viewer then uses the corrected body parts.
 
 ![Pose viewer: x and y traces of a forepaw with event markers and the body-part list](images/pose-viewer.png)
 

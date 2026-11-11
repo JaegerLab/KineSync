@@ -37,7 +37,7 @@ S.digitalColor = C.yellow;            % digital channel, right axis
 %% Behavior and Edit Mask
 S.maskedColor = C.blueDark;           % trace inside the mask (analysed)
 S.unmaskedColor = C.blueGrey;         % trace outside the mask
-S.threshColor = C.blueDark;           % paw threshold (dotted)
+S.threshColor = C.blueDark;           % body-part threshold (dotted)
 S.maskPreviewGood = C.black;          % mask preview speed, passing the threshold
 S.maskPreviewBad = C.grey;            % mask preview speed, failing it
 S.maskPreviewThresh = C.black;        % mask preview speed threshold (dashed)

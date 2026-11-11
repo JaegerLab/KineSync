@@ -13,7 +13,7 @@ The ETA uses the current selections in the other viewers:
 - **Ephys:** the data type (`Raw` or `Processed N`) and channel selected in the
   [Ephys viewer](ephys.md). Rectified, down-sampled data (the default
   preprocessing) gives the average muscle activation envelope.
-- **Events:** the paw, trace and event type selected in the
+- **Events:** the body part, trace and event type selected in the
   [Behavior viewer](behavior.md). Masked periods contain no events.
 
 Click **Event Triggered Avg** in the Behavior viewer, set the parameters, and
@@ -81,7 +81,7 @@ band is ±3.
 ## History
 
 Every **Plot** adds a run to the history list at the bottom of the window. A
-run stores the result, all parameters, the paw, event, trace, ephys type and
+run stores the result, all parameters, the body part, event, trace, ephys type and
 channel. Selecting a run shows it again with its parameters. 🗑️ deletes the
 selected run, ⃠ clears all runs, and [➜ copies the plot into a MATLAB figure.
 

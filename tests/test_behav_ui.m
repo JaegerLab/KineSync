@@ -3,7 +3,7 @@ function tests = test_behav_ui
 tests = functiontests(localfunctions);
 end
 
-function testSwitchingPawsAndTracesRecalculates(testCase)
+function testSwitchingBodypartsAndTracesRecalculates(testCase)
 assumeTrue(testCase, usejava('desktop'), 'Run UI tests in desktop MATLAB.');
 S = Shared.SessionData.instance();
 assumeTrue(testCase, isempty(fieldnames(S.fig)), 'Close KineSync before running UI tests.');
@@ -11,81 +11,81 @@ S.frameRate = 20;
 Behav.behav_viewer();
 cleanup = onCleanup(@()Shared.exit_all(false));
 hd = S.behav.hd;
-hd.pawList.Items = {'a','b'};
-hd.pawList.ItemsData = [1 2];
-hd.pawList.Value = 1;
-hd.pawList.Enable = 'on';
+hd.bodypart.Items = {'a','b'};
+hd.bodypart.ItemsData = [1 2];
+hd.bodypart.Value = 1;
+hd.bodypart.Enable = 'on';
 hd.eventList.Items = {'rising','falling','onset','offset','peak','valley'};
 hd.eventList.ItemsData = hd.eventList.Items;
 hd.eventList.Value = 'rising'; hd.eventList.Enable = 'on';
 hd.eventCheck.Enable = 'on';
 x = repmat([0;0;4;4;0;0],20,1);
 for k = 1:2
-    S.behav.paw(k).name = hd.pawList.Items{k};
-    S.behav.paw(k).rawX = x+(k-1)*10;
-    S.behav.paw(k).rawY = circshift(x,1)+(k-1)*20;
-    S.behav.paw(k).thresh = struct('x',NaN,'y',NaN,'speed',NaN);
+    S.behav.bodypart(k).name = hd.bodypart.Items{k};
+    S.behav.bodypart(k).rawX = x+(k-1)*10;
+    S.behav.bodypart(k).rawY = circshift(x,1)+(k-1)*20;
+    S.behav.bodypart(k).thresh = struct('x',NaN,'y',NaN,'speed',NaN);
 end
 notify(S,'InfoChanged');   % Behavior recalculates on a time-base change
 verifyTrue(testCase,S.behav.eventsValid);
-first = S.behav.paw(1).rising;
+first = S.behav.bodypart(1).rising;
 % Other viewers read events through Behav.current_events, never the Behavior viewer's controls.
 events = Behav.current_events(S);
 verifyEqual(testCase,events.idx,first(:));
 verifyEqual(testCase,events.t,S.behav.t(first(:)));
-verifyEqual(testCase,events.x,S.behav.paw(1).rawX(first(:)));
+verifyEqual(testCase,events.x,S.behav.bodypart(1).rawX(first(:)));
 hd.eventCheck.Value = false;
 callback = hd.eventCheck.ValueChangedFcn; callback(hd.eventCheck,[]);
 verifyEmpty(testCase,Behav.current_events(S));
 hd.eventCheck.Value = true;
 callback(hd.eventCheck,[]);
 verifyNotEmpty(testCase,Behav.current_events(S));
-% Mask GUI must work with the new data model (no per-paw .trace).
-verifyFalse(testCase,isfield(S.behav.paw,'trace'));
+% Mask GUI must work with the new data model (no per-body-part .trace).
+verifyFalse(testCase,isfield(S.behav.bodypart,'trace'));
 maskFig = Behav.mask_GUI([100 100]);
 maskCleanup = onCleanup(@()delete(maskFig)); % not stored in hd: exit_all misses it
 preview = findall(maskFig,'Type','uibutton','Text','Preview');
 callback = preview.ButtonPushedFcn; callback(preview,[]);
 verifyTrue(testCase,isfield(S.behav,'maskTemp'));
-verifyEqual(testCase,S.behav.paw(1).rising,first);
+verifyEqual(testCase,S.behav.bodypart(1).rising,first);
 commit = findall(maskFig,'Type','uibutton','Text','Generate Mask');
 callback = commit.ButtonPushedFcn; callback(commit,[]);
 verifyFalse(testCase,isfield(S.behav,'maskTemp'));
 verifyTrue(testCase,all(S.behav.mask));
-hd.pawList.Value = 2;
-callback = hd.pawList.ValueChangedFcn; callback(hd.pawList,[]);
-verifyEqual(testCase,S.behav.paw(2).rising,first);
+hd.bodypart.Value = 2;
+callback = hd.bodypart.ValueChangedFcn; callback(hd.bodypart,[]);
+verifyEqual(testCase,S.behav.bodypart(2).rising,first);
 hd.trace.Value = 'Y';
 callback = hd.trace.ValueChangedFcn; callback(hd.trace,[]);
-verifyEqual(testCase,S.behav.paw(2).traceType,'y');
+verifyEqual(testCase,S.behav.bodypart(2).traceType,'y');
 verifyFalse(testCase,any(ismember({'onset','offset'},hd.eventList.Items)));
-verifyEmpty(testCase,S.behav.paw(2).onset);
-verifyEmpty(testCase,S.behav.paw(2).offset);
-verifyNotEqual(testCase,S.behav.paw(2).rising,first);
+verifyEmpty(testCase,S.behav.bodypart(2).onset);
+verifyEmpty(testCase,S.behav.bodypart(2).offset);
+verifyNotEqual(testCase,S.behav.bodypart(2).rising,first);
 % Preview never changes committed-mask events, even when it excludes everything.
-beforePreview = S.behav.paw(2).rising;
+beforePreview = S.behav.bodypart(2).rising;
 S.behav.maskTemp = false(size(S.behav.t));
 notify(S,'MaskPreviewChanged');
-verifyEqual(testCase,S.behav.paw(2).rising,beforePreview);
+verifyEqual(testCase,S.behav.bodypart(2).rising,beforePreview);
 S.behav = rmfield(S.behav,'maskTemp');
 % Manual threshold survives refresh and preview.
-hd.pawthresh.Value = 99;
-callback = hd.pawthresh.ValueChangedFcn; callback(hd.pawthresh,[]);
+hd.bodypartThresh.Value = 99;
+callback = hd.bodypartThresh.ValueChangedFcn; callback(hd.bodypartThresh,[]);
 S.behav.maskTemp = false(size(S.behav.t));
 notify(S,'InfoChanged');
-verifyEqual(testCase,S.behav.paw(2).thresh.y,99);
-verifyEmpty(testCase,S.behav.paw(2).rising);
+verifyEqual(testCase,S.behav.bodypart(2).thresh.y,99);
+verifyEmpty(testCase,S.behav.bodypart(2).rising);
 S.behav = rmfield(S.behav,'maskTemp');
 % Commit an all-false mask: calculation succeeds and every marker disappears.
 S.behav.mask = false(size(S.behav.t));
 notify(S,'MaskChanged');
 verifyTrue(testCase,S.behav.eventsValid);
-verifyEmpty(testCase,S.behav.paw(2).rising);
+verifyEmpty(testCase,S.behav.bodypart(2).rising);
 verifyEqual(testCase,hd.eventNum.Value,0);
 % A failed calculation invalidates stored events and cannot expose old markers.
 S.behav.mask = true(numel(S.behav.t)+1,1);
-callback = hd.pawList.ValueChangedFcn;
-verifyError(testCase,@()callback(hd.pawList,[]),'behav:maskSize');
+callback = hd.bodypart.ValueChangedFcn;
+verifyError(testCase,@()callback(hd.bodypart,[]),'behav:maskSize');
 verifyFalse(testCase,Behav.events_current(S));
 verifyEmpty(testCase,Behav.current_events(S));
 end
@@ -179,33 +179,33 @@ S.frameRate = 20;
 behavFig = Behav.behav_viewer();
 poseFig = Pose.pose_viewer();
 hd = S.behav.hd;
-hd.pawList.Items = {'a','b'}; hd.pawList.ItemsData = [1 2]; hd.pawList.Value = 2;
-hd.pawList.Enable = 'on';
+hd.bodypart.Items = {'a','b'}; hd.bodypart.ItemsData = [1 2]; hd.bodypart.Value = 2;
+hd.bodypart.Enable = 'on';
 hd.eventList.Items = {'rising','falling','onset','offset','peak','valley'};
 hd.eventList.ItemsData = hd.eventList.Items;
 hd.eventList.Value = 'rising'; hd.eventList.Enable = 'on';
 hd.resolution.Value = 42;
 x = repmat([0;0;4;4;0;0],20,1);
 for k = 1:2
-    S.behav.paw(k).name = hd.pawList.Items{k};
-    S.behav.paw(k).rawX = x+(k-1)*10;
-    S.behav.paw(k).rawY = circshift(x,1)+(k-1)*20;
-    S.behav.paw(k).thresh = struct('x',NaN,'y',NaN,'speed',NaN);
+    S.behav.bodypart(k).name = hd.bodypart.Items{k};
+    S.behav.bodypart(k).rawX = x+(k-1)*10;
+    S.behav.bodypart(k).rawY = circshift(x,1)+(k-1)*20;
+    S.behav.bodypart(k).thresh = struct('x',NaN,'y',NaN,'speed',NaN);
 end
 notify(S,'InfoChanged');
 behavFig.Position = [150 160 900 450];
 S.setTime(2); S.setZoom([1 3]);
 Shared.write_session(file,{'behav'});   % pose stays out of the session
 % change everything, then restore
-hd.resolution.Value = 10; hd.pawList.Value = 1;
+hd.resolution.Value = 10; hd.bodypart.Value = 1;
 S.frameRate = 50; S.setTime(4);
 Shared.restore_session(Shared.read_session(file));
 verifyFalse(testCase,isgraphics(behavFig) || isgraphics(poseFig));   % all windows replaced
 verifyEqual(testCase,fieldnames(S.fig),{'behav'});
 verifyEqual(testCase,S.fig.behav.Position,[150 160 900 450]);
 verifyEqual(testCase,S.behav.hd.resolution.Value,42);
-verifyEqual(testCase,S.behav.hd.pawList.Value,2);
-verifyEqual(testCase,numel(S.behav.paw),2);
+verifyEqual(testCase,S.behav.hd.bodypart.Value,2);
+verifyEqual(testCase,numel(S.behav.bodypart),2);
 verifyTrue(testCase,S.behav.eventsValid);
 verifyEqual(testCase,[S.frameRate S.currentTime],[20 2]);
 verifyEqual(testCase,S.currentZoom,[1 3]);

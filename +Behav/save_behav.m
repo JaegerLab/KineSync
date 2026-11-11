@@ -2,7 +2,7 @@ function save_behav(filename, behavData, settings, frameRate, range)
 % Behav.save_behav(filename, behavData, settings, frameRate, range)
 % Write the behavior data to a .mat file (-v7.3) with variables
 %   fileFormat = 'KineSync behav', formatVersion = 2, and behav with fields
-%     paw (name, rawX, rawY in pixels, thresh per trace), selection,
+%     bodypart (name, rawX, rawY in pixels, thresh per trace), selection,
 %     mask, maskParam, eta, source, filename (the pose file),
 %     resolution, minInterval, frameRate, timeRange
 % settings: struct with resolution (px/cm) and minInterval (s), from the viewer.
@@ -12,14 +12,14 @@ function save_behav(filename, behavData, settings, frameRate, range)
 %        so frames keep their numbers.
 
     if nargin < 5, range = []; end
-    nFrames = numel(behavData.paw(1).rawX);
+    nFrames = numel(behavData.bodypart(1).rawX);
     out = struct();
     out.fileFormat = 'KineSync behav';
     out.formatVersion = 2;
 
     g = struct();
-    g.paw = struct('name', {behavData.paw.name}, 'rawX', {behavData.paw.rawX}, ...
-        'rawY', {behavData.paw.rawY}, 'thresh', {behavData.paw.thresh});
+    g.bodypart = struct('name', {behavData.bodypart.name}, 'rawX', {behavData.bodypart.rawX}, ...
+        'rawY', {behavData.bodypart.rawY}, 'thresh', {behavData.bodypart.thresh});
     g.selection = behavData.selection;
     g.mask = true(nFrames, 1);
     if isfield(behavData, 'mask'), g.mask = logical(behavData.mask(:)); end
@@ -37,9 +37,9 @@ function save_behav(filename, behavData, settings, frameRate, range)
 
     if ~isempty(range)
         outside = ~(behavData.t(:) >= range(1) & behavData.t(:) <= range(2));
-        for k = 1:numel(g.paw)
-            g.paw(k).rawX(outside) = NaN;
-            g.paw(k).rawY(outside) = NaN;
+        for k = 1:numel(g.bodypart)
+            g.bodypart(k).rawX(outside) = NaN;
+            g.bodypart(k).rawY(outside) = NaN;
         end
         g.mask(outside) = false;
     end

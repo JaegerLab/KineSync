@@ -19,7 +19,7 @@ It detects events from body-part trajectories and computes event-triggered avera
   DeepLabCut CSV format. Tracking errors are corrected semi-automatically by
   segmenting each trajectory at jumps and interpolating through trusted
   segments. You can review and edit the result.
-- **Behavior.** Detects events from paw x, y or speed (threshold crossings,
+- **Behavior.** Detects events from body-part x, y or speed (threshold crossings,
   movement onset and offset, peaks, valleys). Time-based and speed-based masks
   exclude unwanted periods.
 - **Event-triggered average.** Averages an ephys signal (for example rectified EMG) around behavioral events against a chosen
@@ -54,7 +54,7 @@ The launcher opens with four buttons: **Video**, **Ephys**, **Pose** and
 3. **Pose:** `File > Open` the pose file, and correct tracking errors with **Pose Fix**.
 4. **Synchronize** in the Ephys viewer: pair the camera TTLs with the frames,
    which puts Video, Pose and Behavior on the ephys clock.
-5. **Behavior:** `File > Import Pose`, choose the paws, set the threshold and mask,
+5. **Behavior:** `File > Import Pose`, choose the body parts, set the threshold and mask,
    then open **Event Triggered Avg**.
 6. `File > Save session` to keep everything.
 

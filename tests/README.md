@@ -48,7 +48,7 @@ results = runtests('tests/test_behav_ui.m');
 assertSuccess(results)
 ```
 
-This checks paw/trace switching, the mask editor without per-paw `.trace`,
+This checks body-part/trace switching, the mask editor without per-body-part `.trace`,
 preview versus commit, threshold persistence, all-false masks and invalidation
 after a failed calculation, and the menu bar: launcher closing, Window menu
 checkmarks and sub-windows, and Exit all resetting the session; and that
@@ -93,7 +93,7 @@ Manual checks with representative recordings are still required:
 - Load pose CSV/HDF5/MAT files (DeepLabCut format, also SLEAP's DeepLabCut-format csv export); inspect markers at known frames.
 - Use a video whose encoded rate differs from acquisition rate; check first, consecutive,
   jumped-to and last frames, and playback speed.
-- Save a session with a rate override, selected paw/trace, thresholds, time and zoom;
+- Save a session with a rate override, selected body part/trace, thresholds, time and zoom;
   reload over another session and after restarting; check all four viewers.
 - Save session lists the open modules, all selected; save only some and check
   that loading reopens just those. With no module open it shows an alert.
@@ -130,7 +130,7 @@ Manual checks of Pose and Behavior files:
 - Open the zoom-window csv with the full video open: an info alert says it
   was padded, and markers match the video at known frames. With a video
   cropped to the same frames it is shifted instead.
-- Behavior Save, then Open in a new session: paws, trace, event type, thresholds,
+- Behavior Save, then Open in a new session: body parts, trace, event type, thresholds,
   resolution, min interval, mask and ETA history come back; events match.
   A zoom-window save shows only that part, the rest masked.
 - Behavior Open with a different frame rate warns. A behavior file imported from the

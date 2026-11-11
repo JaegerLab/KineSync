@@ -1,19 +1,19 @@
 # Behavior analysis
 
-The Behavior viewer turns paw trajectories into events, such as swing onsets
+The Behavior viewer turns body-part trajectories into events, such as swing onsets
 or position peaks. A mask restricts the analysis to the periods you choose.
 The events are shown in every viewer and are used by the
 [event-triggered average](eta.md).
 
 ![Behavior viewer: forepaw speed trace with the threshold line, onset markers and the event list](images/behavior-viewer.png)
 
-## Importing paws
+## Importing body parts
 
-`File > Import Pose` copies paw trajectories from the Pose viewer. If no pose
-file is open there, it asks for one. Select one or more paws, typically the
+`File > Import Pose` copies body-part trajectories from the Pose viewer. If no pose
+file is open there, it asks for one. Select one or more body parts, typically the
 corrected body parts saved by [Pose Fix](pose.md#correcting-tracking-errors).
 
-When the paws come from the Pose viewer and you later edit or correct them
+When the body parts come from the Pose viewer and you later edit or correct them
 there, the Behavior viewer asks whether to **Update** to the new data or **Keep**
 the copy it has.
 
@@ -24,26 +24,26 @@ the copy it has.
 | Frame rate | — | The shared frame rate. Type a rate to override it, or clear it for automatic, e.g. when analysing a pose file without video or ephys data (see [Timing](synchronization.md)) |
 | Resolution | 30 px/cm | Converts pixels to centimetres |
 | Trace | X | `X`, `Y` (cm) or `Speed` (cm/s) |
-| Paw thresh | automatic | Threshold for the selected paw and trace |
+| Threshold | automatic | Threshold for the selected body part and trace |
 | Min interval | 0.2 s | Minimum time between peaks or valleys. Greyed out for rising and falling, which do not use it |
-| Near-zero | automatic | Shown instead of *Min interval* when onset or offset is selected: the speed taken as rest, per paw. Automatic values are shown in italics; type a value to override, or clear the field to return to automatic |
-| Paw list | | The paw to analyse |
+| Near-zero | automatic | Shown instead of *Min interval* when onset or offset is selected: the speed taken as rest, per body part. Automatic values are shown in italics; type a value to override, or clear the field to return to automatic |
+| Body part list | | The body part to analyse |
 | Events | on | Show the events of the selected type in all viewers |
 | n = | | Number of events of the selected type |
 | Event list | | The event type to show and use for the ETA |
 | Edit Mask | | Open the mask editor |
 | Event Triggered Avg | | Open the ETA window |
 
-Only the selected paw and trace are analysed. Changing either recomputes the
+Only the selected body part and trace are analysed. Changing either recomputes the
 events.
 
-**Speed** is the paw's displacement in the image, averaged over 3 frames and
+**Speed** is the body part's displacement in the image, averaged over 3 frames and
 smoothed with a 3-frame moving average. It is converted to cm/s using the
 frame rate and the resolution.
 
 **Threshold.** By default the threshold is the mean of the whole trace,
 including masked frames, so it does not change when you edit the mask.
-Typing a value sets a manual threshold for that paw and trace, and it is kept
+Typing a value sets a manual threshold for that body part and trace, and it is kept
 when you switch back and forth. The threshold is drawn as a dotted line.
 
 ## Events
@@ -62,7 +62,7 @@ All events are frame indices in the original video. Their times come from the
 
 For speed traces, **rising**/**falling** mark swing start and end at the
 threshold level. **onset**/**offset** move these to the nearby moments when
-the paw is truly at rest. For X or Y, **peak** and **valley** mark the
+the body part is truly at rest. For X or Y, **peak** and **valley** mark the
 extremes of each stride.
 
 Peaks and valleys must have a prominence of at least one standard deviation
@@ -72,7 +72,7 @@ crossings have no minimum spacing.
 ### Rest level for onset and offset
 
 The rest level is the *Near-zero* field. Set by hand, it applies to the
-selected paw. Left empty, it is estimated from the speed trace itself:
+selected body part. Left empty, it is estimated from the speed trace itself:
 
 1. The speed is smoothed over 0.15 s and log-compressed.
 2. A histogram of the smoothed speed is searched for two modes, rest and
@@ -143,6 +143,6 @@ The mask settings are stored, so the editor reopens as you left it.
 
 ## Saving
 
-`File > Save` writes the paws, mask, settings and ETA history to a `.mat`
+`File > Save` writes the body parts, mask, settings and ETA history to a `.mat`
 file. `File > Open` reads it back and recomputes the events. See
 [Sessions and files](files.md#behavior-files).

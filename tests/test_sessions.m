@@ -12,7 +12,7 @@ S.fig.behav = figure('Visible', 'off', 'Position', [30 40 500 400]);
 S.pose(1).table = table((1:5)', (1:5)', ones(5,1), 'VariableNames', {'paw_x','paw_y','paw_likelihood'});
 S.pose.filename = 'C:\data\pose.csv';
 S.pose.hd = struct();
-S.behav(1).paw = struct('name', 'paw', 'rawX', (1:5)', 'rawY', (1:5)');
+S.behav(1).bodypart = struct('name', 'paw', 'rawX', (1:5)', 'rawY', (1:5)');
 S.behav.hd = struct();
 S.frameRate = 30; S.currentTime = 1.5; S.currentZoom = [1 2];
 S.defaultPath = tempdir;
@@ -47,7 +47,7 @@ end
 function testModuleWithoutDataSavesOnlyItsWindow(testCase)
 file = testCase.TestData.file;
 S = Shared.SessionData.instance();
-S.behav = struct('hd', struct());   % window open, no paws
+S.behav = struct('hd', struct());   % window open, no body parts
 Shared.write_session(file, {'pose', 'behav'});
 saved = Shared.read_session(file);
 verifyEqual(testCase, sort(fieldnames(saved.figures)), {'behav'; 'pose'});

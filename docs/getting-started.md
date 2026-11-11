@@ -114,11 +114,11 @@ camera TTL pulses once you click **Synchronize** in the Ephys viewer.
    Use **Pose Fix** to correct tracking errors and **Save As** the corrected
    body part. See [Pose viewer and correction](pose.md).
 5. **Behavior.** In the Behavior viewer, choose `File > Import Pose` and select the
-   paws. Set **Resolution** (pixels per cm), the trace (X, Y or Speed) and a
+   body parts. Set **Resolution** (pixels per cm), the trace (X, Y or Speed) and a
    threshold. Use **Edit Mask** to exclude periods you don't want to analyse.
    Events appear as magenta circles in every viewer. See
    [Behavior analysis](behavior.md).
-6. **ETA.** Pick the ephys channel and data type in the Ephys viewer, and the paw
+6. **ETA.** Pick the ephys channel and data type in the Ephys viewer, and the body part
    and event type in the Behavior viewer. Then click **Event Triggered Avg** and
    **Plot**. See [Event-triggered average](eta.md).
 7. **Save.** `File > Save session` stores the data, settings and window
@@ -131,8 +131,8 @@ name you choose (default `data`). The variable is the live session object, not
 a copy, so it keeps changing while KineSync runs:
 
 ```matlab
-data.behav.paw(1).onset        % onset frame indices of the first paw
-data.behav.t(data.behav.paw(1).onset)   % ...and their times in seconds
+data.behav.bodypart(1).onset        % onset frame indices of the first body part
+data.behav.t(data.behav.bodypart(1).onset)   % ...and their times in seconds
 data.behav.eta(end)            % the most recent ETA result
 ```
 

@@ -133,7 +133,7 @@ classdef SessionData < handle
             counts = struct();
             if obj.has('video'), counts.video = obj.video.vid.NumFrames; end
             if obj.has('pose'), counts.pose = height(obj.pose.table); end
-            if obj.has('behav'), counts.behav = numel(obj.behav.paw(1).rawX); end
+            if obj.has('behav'), counts.behav = numel(obj.behav.bodypart(1).rawX); end
         end
 
         % Notify PoseChanged with what changed.
@@ -179,7 +179,7 @@ classdef SessionData < handle
                         tf = true;
                     end
                 case 'behav'
-                    if ~isempty(obj.behav) && isfield(obj.behav, 'paw') && ~isempty(obj.behav.paw)
+                    if ~isempty(obj.behav) && isfield(obj.behav, 'bodypart') && ~isempty(obj.behav.bodypart)
                         tf = true;
                     end
                 case 'bpod'

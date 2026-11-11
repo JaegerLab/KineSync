@@ -12,7 +12,7 @@ function fig = behav_viewer()
         fig = uifigure('Name', 'KineSync Behavior', 'Position', Shared.window_position('behav', [100 100 1000 500]), ...
             'CloseRequestFcn',@onClose);
         data.fig(1).behav = fig;
-        Shared.MenuBar(fig, {'Open', @openBehav; 'Import Pose', @importPaws; 'Save', @saveBehav});
+        Shared.MenuBar(fig, {'Open', @openBehav; 'Import Pose', @importBodyparts; 'Save', @saveBehav});
         drawnow
         grid1 = uigridlayout(fig, Padding = [20,20,20,20], ...
             ColumnWidth = {'1x', 140}, RowHeight = {30, '1x', 30});
@@ -26,9 +26,9 @@ function fig = behav_viewer()
         hd.resolution = uieditfield(subgrid1,'numeric','Value',30, ...
             'ValueDisplayFormat','Resolution: %d px/cm', ...
             'ValueChangedFcn', @(~,~)updateInfo);
-        hd.pawthresh = uieditfield(subgrid1,'numeric','Value',10, ...
-            'ValueDisplayFormat','Paw thresh: %.2f cm', ...
-            'ValueChangedFcn', @pawThreshChanged);
+        hd.bodypartThresh = uieditfield(subgrid1,'numeric','Value',10, ...
+            'ValueDisplayFormat','Threshold: %.2f cm', ...
+            'ValueChangedFcn', @bodypartThreshChanged);
         hd.minTimeInterval = uieditfield(subgrid1,'numeric','Value',0.2, ...
             'ValueDisplayFormat','Min interval: %.2f s', ...
             'Limits', [0 Inf], 'LowerLimitInclusive', 'off', ...
@@ -54,8 +54,8 @@ function fig = behav_viewer()
         subgrid3 = uigridlayout(grid1, [4 1], Padding = [0 0 0 0], ...
             RowHeight={'1x', 30, '1x', 30});
         subgrid3.Layout.Row = 2; subgrid3.Layout.Column = 2;
-        hd.pawList = uilistbox(subgrid3, 'Multiselect', 'off', ...
-            'ValueChangedFcn', @pawChanged, 'Enable','off');
+        hd.bodypart = uilistbox(subgrid3, 'Multiselect', 'off', ...
+            'ValueChangedFcn', @bodypartChanged, 'Enable','off');
         subgrid4 = uigridlayout(subgrid3, [1 2], Padding = [0 0 0 0]);
             hd.eventCheck = uicheckbox(subgrid4, Text='Events', Value=1, ...
                 Enable='off', ValueChangedFcn = @eventCheckChanged);
@@ -112,7 +112,7 @@ function fig = behav_viewer()
             {'maskSpeedGood', 'maskSpeedBad', 'maskSpeedThres'}));
     end
 
-    function importPaws(~,~)
+    function importBodyparts(~,~)
         hd = data.behav.hd;
         if ~data.has('pose')
             % no pose data, read pose from file.
@@ -135,14 +135,14 @@ function fig = behav_viewer()
             source = 'pose_module';  % follow later pose edits (see onPoseChanged)
         end
         
-        % select paws
-        [pawIdx, tf] = listdlg('PromptString','Select paws:','ListString',partList);
+        % select body parts
+        [idx, tf] = listdlg('PromptString','Select body parts:','ListString',partList);
         drawnow; figure(fig);
         if ~tf, return; end
 
         % add selected body parts into GUI lists
-        hd.pawList.Items = partList(pawIdx); hd.pawList.Enable = 'on';
-        hd.pawList.ItemsData = 1:numel(pawIdx);
+        hd.bodypart.Items = partList(idx); hd.bodypart.Enable = 'on';
+        hd.bodypart.ItemsData = 1:numel(idx);
 
         % save raw x, y in pixels, 
         % so that later no need to read from pose when frame rate changes.
@@ -155,12 +155,12 @@ function fig = behav_viewer()
         data.behav.source = source;
         data.behav.filename = poseFile;   % shown in the title
         posePromptPending = false;
-        for ii = 1:numel(hd.pawList.Items) 
-            pawName = hd.pawList.Items{ii};
-            data.behav.paw(ii).name = pawName;
-            data.behav.paw(ii).rawX = tablePose.([pawName '_x']);
-            data.behav.paw(ii).rawY = tablePose.([pawName '_y']);
-            data.behav.paw(ii).thresh = struct('x',NaN,'y',NaN,'speed',NaN,'nearZero',NaN);
+        for ii = 1:numel(hd.bodypart.Items) 
+            bodypartName = hd.bodypart.Items{ii};
+            data.behav.bodypart(ii).name = bodypartName;
+            data.behav.bodypart(ii).rawX = tablePose.([bodypartName '_x']);
+            data.behav.bodypart(ii).rawY = tablePose.([bodypartName '_y']);
+            data.behav.bodypart(ii).thresh = struct('x',NaN,'y',NaN,'speed',NaN,'nearZero',NaN);
         end
 
         % enable Events
@@ -179,7 +179,7 @@ function fig = behav_viewer()
     end
 
     % The title shows the behavior file last opened or saved, otherwise the pose
-    % file the paws were imported from.
+    % file the body parts were imported from.
     function updateTitle()
         fig.Name = 'KineSync Behavior';
         if ~data.has('behav'), return; end
@@ -257,14 +257,14 @@ function fig = behav_viewer()
         if ~isempty(g.maskParam), data.behav.maskParam = g.maskParam; end
         if isfield(g, 'eta') && ~isempty(g.eta), data.behav.eta = g.eta; end
         posePromptPending = false;
-        data.behav.paw = g.paw;
+        data.behav.bodypart = g.bodypart;
 
         % widgets
         traces = struct('x', 'X', 'y', 'Y', 'speed', 'Speed');
-        hd.pawList.Items = {g.paw.name};
-        hd.pawList.ItemsData = 1:numel(g.paw);
-        hd.pawList.Value = g.selection.paw;
-        hd.pawList.Enable = 'on';
+        hd.bodypart.Items = {g.bodypart.name};
+        hd.bodypart.ItemsData = 1:numel(g.bodypart);
+        hd.bodypart.Value = g.selection.bodypart;
+        hd.bodypart.Enable = 'on';
         hd.trace.Value = traces.(g.selection.trace);
         hd.resolution.Value = g.resolution;
         hd.minTimeInterval.Value = g.minInterval;
@@ -294,21 +294,21 @@ function fig = behav_viewer()
         hd = data.behav.hd;
         data.behav.speedFactor = data.getFrameRate() / hd.resolution.Value;
 
-        for ii = 1:numel(hd.pawList.Items)    
-            paw = data.behav.paw(ii);
+        for ii = 1:numel(hd.bodypart.Items)    
+            bodypart = data.behav.bodypart(ii);
 
             % convert raw xy (in pixels) to xy (in centimeters)
-            data.behav.paw(ii).x = paw.rawX./hd.resolution.Value;
-            data.behav.paw(ii).y = paw.rawY./hd.resolution.Value;
+            data.behav.bodypart(ii).x = bodypart.rawX./hd.resolution.Value;
+            data.behav.bodypart(ii).y = bodypart.rawY./hd.resolution.Value;
             
             % calculate speed in cm/s
-            data.behav.paw(ii).speed = ...
-                Behav.smooth_speed(paw.rawX, paw.rawY, 3) .* ...
+            data.behav.bodypart(ii).speed = ...
+                Behav.smooth_speed(bodypart.rawX, bodypart.rawY, 3) .* ...
                 data.behav.speedFactor;
 
         end
         % reconstruct t
-        data.behav.t = data.getFrameTimes(numel(data.behav.paw(1).rawX));
+        data.behav.t = data.getFrameTimes(numel(data.behav.bodypart(1).rawX));
     end
    
     function plotTrace()
@@ -320,10 +320,10 @@ function fig = behav_viewer()
         hold(hd.ax, 'on');
 
         % get trace
-        pawIdx = hd.pawList.Value;
+        idx = hd.bodypart.Value;
         t = data.behav.t;
         traceType = lower(hd.trace.Value);
-        trace = data.behav.paw(pawIdx).(traceType);
+        trace = data.behav.bodypart(idx).(traceType);
 
         % get mask
         if isfield(data.behav, 'maskTemp')
@@ -345,16 +345,16 @@ function fig = behav_viewer()
         traceUnmask = trace; traceUnmask(~unmask) = NaN;
         traceMask = trace; traceMask(~mask) = NaN;
         style = Shared.styles();
-        hd = Shared.myPlot(@plot, hd, 'pawUnmask', hd.ax, t, traceUnmask, ...
+        hd = Shared.myPlot(@plot, hd, 'bodypartUnmask', hd.ax, t, traceUnmask, ...
             'Color', style.unmaskedColor, 'HitTest', 'off');
-        hd = Shared.myPlot(@plot, hd, 'pawMask', hd.ax, t, traceMask, ...
+        hd = Shared.myPlot(@plot, hd, 'bodypartMask', hd.ax, t, traceMask, ...
             'Color', style.maskedColor, 'HitTest', 'off');
 
         % plot threshold line
         % Preview colors may change; thresholds and events use committed data.
-        thresh = selectedThreshold(trace, pawIdx, traceType);
-        hd.pawthresh.Value = thresh; % restore threhold display.
-        hd = Shared.myPlot(@yline, hd, 'pawThresLine', hd.ax, ...
+        thresh = selectedThreshold(trace, idx, traceType);
+        hd.bodypartThresh.Value = thresh; % restore threhold display.
+        hd = Shared.myPlot(@yline, hd, 'bodypartThresLine', hd.ax, ...
                         [], thresh, ...
                         ':', 'Color', style.threshColor, 'HitTest', 'off');
 
@@ -410,15 +410,15 @@ function fig = behav_viewer()
     % viewers (via Behav.current_events) never read the Behavior viewer's UI controls.
     function syncSelection()
         hd = data.behav.hd;
-        sel.paw = hd.pawList.Value;
+        sel.bodypart = hd.bodypart.Value;
         sel.trace = lower(hd.trace.Value);
         sel.event = hd.eventList.Value;
         sel.show = logical(hd.eventCheck.Value) && isequal(hd.eventCheck.Enable, 'on');
         data.behav.selection = sel;
     end
 
-    function thresh = selectedThreshold(trace, pawIdx, traceType)
-        thresh = data.behav.paw(pawIdx).thresh.(traceType);
+    function thresh = selectedThreshold(trace, idx, traceType)
+        thresh = data.behav.bodypart(idx).thresh.(traceType);
         if isnan(thresh)
             % Same automatic threshold in plot and calculation; independent of preview.
             thresh = mean(trace, 'omitnan');
@@ -430,42 +430,42 @@ function fig = behav_viewer()
         invalidateEvents();
         syncSelection();
         hd = data.behav.hd;
-        pawIdx = hd.pawList.Value;
+        idx = hd.bodypart.Value;
         traceType = lower(hd.trace.Value);
-        trace = data.behav.paw(pawIdx).(traceType);
-        threshold = selectedThreshold(trace, pawIdx, traceType);
+        trace = data.behav.bodypart(idx).(traceType);
+        threshold = selectedThreshold(trace, idx, traceType);
         updateEventOptions(traceType);
         nearZero = NaN;
         if strcmp(traceType,'speed')
-            nearZero = manualNearZero(pawIdx);
+            nearZero = manualNearZero(idx);
             if isfinite(nearZero)
                 status = 'Set by hand. Clear the field to estimate it automatically.';
             else
                 [nearZero, restInfo] = Behav.auto_rest_threshold(trace, data.getFrameRate());
                 status = ['Automatic: ' restInfo.status '. Type a value to override.'];
             end
-            data.behav.paw(pawIdx).nearZeroStatus = status;
+            data.behav.bodypart(idx).nearZeroStatus = status;
         end
-        data.behav.paw(pawIdx).nearZeroThreshold = nearZero;
+        data.behav.bodypart(idx).nearZeroThreshold = nearZero;
         interval = max(1, round(hd.minTimeInterval.Value * data.getFrameRate()));
         detectionMask = data.behav.mask & isfinite(data.behav.t);
         events = Behav.detect_events(trace, detectionMask, threshold, interval, nearZero);
         % Commit only after every event type has been calculated successfully.
         fields = fieldnames(events);
         for k = 1:numel(fields)
-            data.behav.paw(pawIdx).(fields{k}) = events.(fields{k});
+            data.behav.bodypart(idx).(fields{k}) = events.(fields{k});
         end
-        data.behav.paw(pawIdx).traceType = traceType;
-        data.behav.eventsPaw = pawIdx;
+        data.behav.bodypart(idx).traceType = traceType;
+        data.behav.eventsBodypart = idx;
         data.behav.eventsTrace = traceType;
         data.behav.eventsValid = true;
         updateIntervalField();
     end
 
     % NaN: estimate automatically
-    function value = manualNearZero(pawIdx)
+    function value = manualNearZero(idx)
         value = NaN;
-        thresh = data.behav.paw(pawIdx).thresh;
+        thresh = data.behav.bodypart(idx).thresh;
         if isfield(thresh, 'nearZero') && ~isempty(thresh.nearZero), value = thresh.nearZero; end
     end
 
@@ -479,14 +479,14 @@ function fig = behav_viewer()
         hd.minTimeInterval.Visible = ~isRest;
         hd.minTimeInterval.Enable = ~(ischar(eventType) && ismember(eventType, {'rising','falling'}));
         if ~isRest || ~data.has('behav'), return; end
-        pawIdx = hd.pawList.Value;
-        if ~isfield(data.behav.paw, 'nearZeroThreshold'), return; end
-        value = data.behav.paw(pawIdx).nearZeroThreshold;
+        idx = hd.bodypart.Value;
+        if ~isfield(data.behav.bodypart, 'nearZeroThreshold'), return; end
+        value = data.behav.bodypart(idx).nearZeroThreshold;
         if isfinite(value), hd.nearZero.Value = value; else, hd.nearZero.Value = []; end
         hd.nearZero.FontAngle = 'normal';
-        if ~isfinite(manualNearZero(pawIdx)), hd.nearZero.FontAngle = 'italic'; end
-        if isfield(data.behav.paw, 'nearZeroStatus') && ~isempty(data.behav.paw(pawIdx).nearZeroStatus)
-            hd.nearZero.Tooltip = data.behav.paw(pawIdx).nearZeroStatus;
+        if ~isfinite(manualNearZero(idx)), hd.nearZero.FontAngle = 'italic'; end
+        if isfield(data.behav.bodypart, 'nearZeroStatus') && ~isempty(data.behav.bodypart(idx).nearZeroStatus)
+            hd.nearZero.Tooltip = data.behav.bodypart(idx).nearZeroStatus;
         end
     end
 
@@ -495,7 +495,7 @@ function fig = behav_viewer()
         invalidateEvents();
         value = src.Value;
         if isempty(value), value = NaN; end
-        data.behav.paw(data.behav.hd.pawList.Value).thresh.nearZero = value;
+        data.behav.bodypart(data.behav.hd.bodypart.Value).thresh.nearZero = value;
         getEvents(); plotEvents();
     end
 
@@ -513,10 +513,10 @@ function fig = behav_viewer()
         items = {'rising','falling','peak','valley'};
         if strcmp(traceType,'speed')
             items = {'rising','falling','onset','offset','peak','valley'};
-            hd.pawthresh.ValueDisplayFormat = 'Paw thresh: %.2f cm/s';
+            hd.bodypartThresh.ValueDisplayFormat = 'Threshold: %.2f cm/s';
             ylabel(hd.ax,'Speed (cm/s)');
         else
-            hd.pawthresh.ValueDisplayFormat = 'Paw thresh: %.2f cm';
+            hd.bodypartThresh.ValueDisplayFormat = 'Threshold: %.2f cm';
             ylabel(hd.ax,[upper(traceType) ' (cm)']);
         end
         hd.eventList.ItemsData = {};
@@ -531,14 +531,14 @@ function fig = behav_viewer()
         syncSelection();
         hd = data.behav.hd;
         if Behav.events_current(data) && data.behav.selection.show
-            pawIdx = data.behav.selection.paw;
-            eventIdx = data.behav.paw(pawIdx).(data.behav.selection.event);
+            idx = data.behav.selection.bodypart;
+            eventIdx = data.behav.bodypart(idx).(data.behav.selection.event);
             eventT = data.behav.t(eventIdx);
 
             % number of events.
             hd.eventNum.Value = length(eventIdx);
 
-            selectedTrace = data.behav.paw(pawIdx).(data.behav.selection.trace);
+            selectedTrace = data.behav.bodypart(idx).(data.behav.selection.trace);
             style = Shared.styles();
             hd = Shared.myPlot(@scatter, hd, 'eventMarker', hd.ax, ...
                             eventT, selectedTrace(eventIdx), ...
@@ -580,7 +580,7 @@ function fig = behav_viewer()
                 ylabel(hd.ax, 'Speed (cm/s)')
         end
 
-        % Recalculate only the selected paw for this trace.
+        % Recalculate only the selected body part for this trace.
         plotTrace();
         getEvents();
         plotEvents();
@@ -609,27 +609,27 @@ function fig = behav_viewer()
         end
     end
 
-    function pawChanged(~,~)
+    function bodypartChanged(~,~)
         invalidateEvents();
         plotTrace();
         getEvents();
         plotEvents();
     end
 
-    function pawThreshChanged(~,~)
+    function bodypartThreshChanged(~,~)
         if ~data.has('behav'), return; end
         invalidateEvents();
         hd = data.behav.hd;
 
         % save changed value. No more auto value after manually changed
-        pawIdx = hd.pawList.Value;
+        idx = hd.bodypart.Value;
         traceType = lower(hd.trace.Value);
-        data.behav.paw(pawIdx).thresh.(traceType) = hd.pawthresh.Value;
+        data.behav.bodypart(idx).thresh.(traceType) = hd.bodypartThresh.Value;
 
         % update threhold line
         style = Shared.styles();
-        data.behav.hd = Shared.myPlot(@yline, hd, 'pawThresLine', hd.ax, ...
-                [], hd.pawthresh.Value, ...
+        data.behav.hd = Shared.myPlot(@yline, hd, 'bodypartThresLine', hd.ax, ...
+                [], hd.bodypartThresh.Value, ...
                 ':', 'Color', style.threshColor, 'HitTest', 'off');
 
         % redo event detection.
@@ -713,14 +713,14 @@ function fig = behav_viewer()
     end
     
     % === follow edits in the Pose viewer ===========
-    % Only when the paws were imported from the Pose viewer. Prompt once on
+    % Only when the body parts were imported from the Pose viewer. Prompt once on
     % the first relevant change; ignore further changes until answered.
     function onPoseChanged(evt)
         if posePromptPending || ~data.has('behav'), return; end
         if ~isfield(data.behav, 'source') || ~strcmp(data.behav.source, 'pose_module'), return; end
         if ~ismember(evt.Kind, {'open', 'edit', 'commit'}), return; end
-        pawNames = {data.behav.paw.name};
-        changed = intersect(evt.Bodyparts, pawNames, 'stable');
+        bodypartNames = {data.behav.bodypart.name};
+        changed = intersect(evt.Bodyparts, bodypartNames, 'stable');
         if isempty(changed), return; end
 
         posePromptPending = true;
@@ -729,7 +729,7 @@ function fig = behav_viewer()
         else
             what = sprintf('Pose data changed for: %s.', strjoin(changed, ', '));
         end
-        msg = sprintf(['%s\n\nUpdate the behavior paws from the Pose viewer, or keep the ' ...
+        msg = sprintf(['%s\n\nUpdate the behavior body parts from the Pose viewer, or keep the ' ...
             'copy imported earlier?\nUpdate also includes any pose changes made ' ...
             'while this message is open.'], what);
         uiconfirm(fig, msg, 'Pose changed', ...
@@ -739,25 +739,25 @@ function fig = behav_viewer()
 
     function onPoseAnswer(~, evt)
         posePromptPending = false;
-        if strcmp(evt.SelectedOption, 'Update'), updatePawsFromPose(); end
+        if strcmp(evt.SelectedOption, 'Update'), updateBodypartsFromPose(); end
     end
 
-    % Re-copy every imported paw from the current pose table, keeping the
+    % Re-copy every imported body part from the current pose table, keeping the
     % thresholds, then recalculate.
-    function updatePawsFromPose()
+    function updateBodypartsFromPose()
         if ~data.has('behav'), return; end
         if ~data.has('pose')
-            uialert(fig, 'The Pose viewer has no data. The behavior paws were kept.', 'Update');
+            uialert(fig, 'The Pose viewer has no data. The behavior body parts were kept.', 'Update');
             return;
         end
         tablePose = data.pose.table;
-        nOld = numel(data.behav.paw(1).rawX);
+        nOld = numel(data.behav.bodypart(1).rawX);
         missing = {};
-        for ii = 1:numel(data.behav.paw)
-            name = data.behav.paw(ii).name;
+        for ii = 1:numel(data.behav.bodypart)
+            name = data.behav.bodypart(ii).name;
             if all(ismember({[name '_x'], [name '_y']}, tablePose.Properties.VariableNames))
-                data.behav.paw(ii).rawX = tablePose.([name '_x']);
-                data.behav.paw(ii).rawY = tablePose.([name '_y']);
+                data.behav.bodypart(ii).rawX = tablePose.([name '_x']);
+                data.behav.bodypart(ii).rawY = tablePose.([name '_y']);
             else
                 missing{end+1} = name; %#ok<AGROW>
             end
@@ -769,9 +769,9 @@ function fig = behav_viewer()
         end
         if height(tablePose) ~= nOld
             if ~isempty(missing)
-                % paws of different lengths cannot share one time base
+                % body parts of different lengths cannot share one time base
                 uialert(fig, sprintf(['The pose data has %d frames, the behavior data %d, and ' ...
-                    'some paws are missing. Import Pose again instead.'], ...
+                    'some body parts are missing. Import Pose again instead.'], ...
                     height(tablePose), nOld), 'Update failed');
                 return;
             end

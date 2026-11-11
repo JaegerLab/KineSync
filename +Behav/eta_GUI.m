@@ -139,30 +139,30 @@ function fig = eta_GUI(mousePos)
         signalT = src.t;
 
         if ~Behav.events_current(data)
-            uialert(fig, 'Events are not current. Recalculate the selected paw first.', 'Error');
+            uialert(fig, 'Events are not current. Recalculate the selected body part first.', 'Error');
             return;
         end
-        % Paw / event selection
-        pawIdx   = gHd.pawList.Value;
+        % Body part / event selection
+        idx   = gHd.bodypart.Value;
         eventName = gHd.eventList.Value;
-        eventIdx  = data.behav.paw(pawIdx).(eventName);
+        eventIdx  = data.behav.bodypart(idx).(eventName);
         eventT    = data.behav.t(eventIdx);
 
         % Channel name for label
         chanItems = data.ephys.hd.chanList.Items;
         chanData  = data.ephys.hd.chanList.ItemsData;
         if iscell(chanData)
-            idx = cellfun(@(x) isequal(x, channel), chanData);
+            isChan = cellfun(@(x) isequal(x, channel), chanData);
         else
-            idx = chanData == channel;
+            isChan = chanData == channel;
         end
-        if any(idx)
-            ephysChanName = chanItems{find(idx, 1)};
+        if any(isChan)
+            ephysChanName = chanItems{find(isChan, 1)};
         else
             ephysChanName = num2str(channel);
         end
 
-        pawName   = data.behav.paw(pawIdx).name;
+        bodypartName   = data.behav.bodypart(idx).name;
         traceName = gHd.trace.Value;
 
         %% Collect GUI parameters
@@ -184,7 +184,7 @@ function fig = eta_GUI(mousePos)
             'plot',      false);
 
         %% Append caller-supplied metadata fields
-        result.pawName     = pawName;
+        result.bodypartName     = bodypartName;
         result.eventName    = eventName;
         result.traceName   = traceName;
         result.ephysType     = ephysType;
@@ -350,7 +350,7 @@ function fig = eta_GUI(mousePos)
     end
 
     function label = makeLabel(result)
-        label = [result.pawName ', ' result.eventName ...
+        label = [result.bodypartName ', ' result.eventName ...
                  ' on ' result.traceName ', ' result.ephysChanName];
         if result.zscore && ~strcmp(result.method, 'none')
             label = [label ', z-score'];

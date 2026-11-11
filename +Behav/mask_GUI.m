@@ -369,7 +369,7 @@ function maskFig = mask_GUI(mousePos)
         if data.has('pose')
             partList = data.pose.hd.bodypart.Items;
         elseif data.has('behav')
-            partList = {data.behav.paw.name};
+            partList = {data.behav.bodypart.name};
         else
             uialert(maskFig, 'Import behavior or pose data first.', 'No pose data'); return;
         end
@@ -382,8 +382,8 @@ function maskFig = mask_GUI(mousePos)
             x = data.pose.table.([bodyName '_x']);
             y = data.pose.table.([bodyName '_y']);
         else
-            x = data.behav.paw(bodyIdx).rawX;
-            y = data.behav.paw(bodyIdx).rawY;
+            x = data.behav.bodypart(bodyIdx).rawX;
+            y = data.behav.bodypart(bodyIdx).rawY;
         end
         speed = Behav.smooth_speed(x,y,1);
         setSpeed(speed(:), [], "Pose: " + string(bodyName), 'pixels/frame');
@@ -1220,7 +1220,7 @@ function maskFig = mask_GUI(mousePos)
     function mask = buildCombinedMask()
         captureControlState();
 
-        % The paw trace defines the authoritative mask size and sample grid.
+        % The body-part trace defines the authoritative mask size and sample grid.
         traceSize = getTraceSize();
         nSamples = prod(traceSize);
         fs = getFrameRate();
