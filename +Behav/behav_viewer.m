@@ -358,9 +358,9 @@ function fig = behav_viewer()
                         [], thresh, ...
                         ':', 'Color', style.threshColor, 'HitTest', 'off');
 
-        % time line
+        % time line, at the frame the video shows
         hd = Shared.myPlot(@xline, hd, 'timeline', hd.ax, ...
-                        data.currentTime, [], ...
+                        Shared.frame_time(data, data.currentTime), [], ...
                         '-', 'Color', style.timeline, 'HitTest', 'off');
 
         % speed-threshold part of a mask preview, on the right y axis:
@@ -661,7 +661,7 @@ function fig = behav_viewer()
     function updateBehavTime(currentTime)
         hd = data.behav.hd;
         if data.has('behav')
-            set(hd.timeline, 'Value', currentTime);
+            set(hd.timeline, 'Value', Shared.frame_time(data, currentTime));
     
             zoomlim = Shared.zoom(get(hd.ax,'xLim'), currentTime, 'pan');
             data.setZoom(zoomlim);

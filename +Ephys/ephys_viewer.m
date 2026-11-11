@@ -605,17 +605,9 @@ function fig = ephys_viewer()
     end
 
     %% sync figures' time and zoom between windows ========
-    % The time line marks the frame shown in Video/Pose/Behavior: the time of
-    % the frame nearest to t (one timeline, so the first open module's
-    % frame times serve). t itself without frames.
+    % The time line marks the frame shown in Video/Pose/Behavior (Shared.frame_time).
     function t = frameTime(t)
-        for module = {'video', 'pose', 'behav'}
-            m = module{1};
-            if ~data.has(m) || ~isfield(data.(m), 't') || ~any(isfinite(data.(m).t)), continue; end
-            frameTimes = data.(m).t;
-            t = frameTimes(Shared.time_to_frame(frameTimes, t));
-            return;
-        end
+        t = Shared.frame_time(data, t);
     end
 
     % A typed time moves the cursor; the box then shows the frame time it

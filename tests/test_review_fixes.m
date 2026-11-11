@@ -23,6 +23,19 @@ S.setFrameRate(100);   % a typed-in rate overrides the synchronization
 verifyEqual(testCase,S.getFrameTimes(3),[0.01;0.02;0.03]);
 end
 
+function testFrameTimeSnapsToShownFrame(testCase)
+S = Shared.SessionData.instance();
+assumeTrue(testCase, isempty(fieldnames(S.fig)), 'Close KineSync before running this test.');
+addTeardown(testCase, @()delete(Shared.SessionData.instance()));
+verifyEqual(testCase, Shared.frame_time(S, 1.234), 1.234);      % no frames: unchanged
+n = 10;
+S.pose = struct('table', table((1:n)', (1:n)', 'VariableNames', {'a_x','a_y'}), ...
+    't', (1:n)'/4);                                              % frames every 0.25 s
+verifyEqual(testCase, Shared.frame_time(S, 1.1), 1);
+verifyEqual(testCase, Shared.frame_time(S, 1.2), 1.25);
+verifyEqual(testCase, Shared.frame_time(S, 99), 2.5);            % clamped to the last frame
+end
+
 function testConvertTime(testCase)
 sa = [1;3;5];
 ta = [10;10.2;10.4005];

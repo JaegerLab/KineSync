@@ -228,9 +228,8 @@ function fig = pose_viewer()
         % The time line must exist before the traces are created: plot order
         % keeps it below them (no uistack: it fails with yyaxis). Session
         % load draws the traces before TimeChanged, so create it here.
-        if ~isfield(hd, 'timelinePose') || ~ishghandle(hd.timelinePose)
-            hd = drawTimeline(hd);
-        end
+        % (also moves it when the frame times changed)
+        hd = drawTimeline(hd);
         hd = Shared.myPlot(@plot, hd, 'xplot', hd.ax, t, xdata, ...
                 '-', 'Color', S.xColor, 'LineWidth', S.trace, ...
                 'HitTest', 'on', 'ButtonDownFcn', @axClicked, 'DisplayName', S.legend.x, ...
@@ -637,14 +636,16 @@ function fig = pose_viewer()
     % time line on the left side (see showBodypart). A plain line, not an
     % xline: an xline is always drawn on top. It reaches past any y range and
     % is left out of the axis limits.
+    % It marks the frame the video shows, so it snaps to that frame's time.
     function hd = drawTimeline(hd)
+        cursor = Shared.frame_time(data, data.currentTime);
         if isfield(hd, 'timelinePose') && isgraphics(hd.timelinePose)
-            hd.timelinePose.XData = [1 1]*data.currentTime;
+            hd.timelinePose.XData = [1 1]*cursor;
             return;
         end
         if numel(hd.ax.YAxis) > 1, yyaxis(hd.ax, 'left'); end
         S = Shared.styles();
-        hd.timelinePose = plot(hd.ax, [1 1]*data.currentTime, [-1e12 1e12], '-', 'Color', S.timeline, ...
+        hd.timelinePose = plot(hd.ax, [1 1]*cursor, [-1e12 1e12], '-', 'Color', S.timeline, ...
             'XLimInclude', 'off', 'YLimInclude', 'off', 'HitTest', 'off', 'HandleVisibility', 'off', ...
             'Tag', 'timelinePose');
     end

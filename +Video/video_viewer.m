@@ -43,7 +43,7 @@ function drawGUI()
         hd.time = uieditfield(subgrid1, 'numeric', ...
             'Limits', [0 Inf], ...
             'ValueDisplayFormat', 'time: %.3f s', ...
-            'ValueChangedFcn', @(src,~)data.setTime(src.Value));
+            'ValueChangedFcn', @timeTyped);
 
         hd.frame = uieditfield(subgrid1, 'numeric', ...
             'Limits', [1 Inf], ...
@@ -285,6 +285,20 @@ function updateVideoTime(newTime)
     if newFrameIdx ~= data.video.frameIdx
         updateVideoFrame(newFrameIdx);
     end
+    showFrameTime();
+end
+
+% A typed time moves to the nearest frame; the field then shows that
+% frame's time (also when the frame does not change).
+function timeTyped(~, ~)
+    data.setTime(data.video.hd.time.Value);
+    showFrameTime();
+end
+
+% time field = time of the frame shown
+function showFrameTime()
+    if ~data.has('video'), return; end
+    data.video.hd.time.Value = data.video.t(data.video.frameIdx);
 end
 
 function updateInfo()
