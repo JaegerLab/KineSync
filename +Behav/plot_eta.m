@@ -56,6 +56,9 @@ function ax = plot_eta(result, target)
         randStdDisp  = randStd;
     end
 
+    style = Shared.styles();
+    c = style.etaColor;
+
     %% ── Draw ─────────────────────────────────────────────────────────────
     cla(ax);
     hold(ax, 'on');
@@ -71,18 +74,18 @@ function ax = plot_eta(result, target)
             fillX = maxLag .* [-1 1 1 -1];
             fillY = [ciLower(1) ciLower(1) ciUpper(1) ciUpper(1)];
             fill1  = fill(ax, fillX, fillY, ...
-                'k', 'EdgeColor', 'none', 'FaceAlpha', 0.15, ...
+                c, 'EdgeColor', 'none', 'FaceAlpha', 0.15, ...
                 'DisplayName', band_label(result.method,nStd));
-            line1  = yline(ax, randMeanDisp(1), 'k--', ...
+            line1  = yline(ax, randMeanDisp(1), '--', 'Color', c, ...
                 'DisplayName', 'control mean');
         else
             % Curve-shaped fill
             fillX = [t; flipud(t)];
             fillY = [ciUpper; flipud(ciLower)];
             fill1  = fill(ax, fillX, fillY, ...
-                'k', 'EdgeColor', 'none', 'FaceAlpha', 0.15, ...
+                c, 'EdgeColor', 'none', 'FaceAlpha', 0.15, ...
                 'DisplayName', band_label(result.method,nStd));
-            line1  = plot(ax, t, randMeanDisp, 'k--', ...
+            line1  = plot(ax, t, randMeanDisp, '--', 'Color', c, ...
                 'DisplayName', 'control mean');
         end
         uistack(line1, 'down');
@@ -90,10 +93,10 @@ function ax = plot_eta(result, target)
     end
 
     % ── ETA line ──────────────────────────────────────────────────────────
-    plot(ax, t, yDisp, 'k', 'DisplayName', 'ETA');
+    plot(ax, t, yDisp, '-', 'Color', c, 'DisplayName', 'ETA');
 
     % ── Centre vertical line ──────────────────────────────────────────────
-    xline(ax, 0, ':k', 'HandleVisibility', 'off');
+    xline(ax, 0, ':', 'Color', c, 'HandleVisibility', 'off');
 
     % ── Peak / trough text labels ─────────────────────────────────────────
     deviation = yDisp - randMeanDisp;

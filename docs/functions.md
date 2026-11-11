@@ -115,7 +115,7 @@ what **Pose Fix** runs.
 | `jumpThresh` | Jump threshold (pixels). `[]` or omitted: estimated by `Pose.auto_jump_threshold` |
 | `seedWidth` | Seed width (frames). `[]` or omitted: estimated by `Pose.auto_window_width` |
 | `maskOrSeg` | Optional. A logical vector (one value per frame) marks frames you already know to be good (`true`) or bad (`false`): good runs become seeds, bad runs are rejected, and nothing is propagated. A segment structure (`seg` from an earlier call, possibly edited) re-runs the algorithm only around the edited segments |
-| `visualize` | `true` to plot the result, with the same layers and styles as the correction overlay in the Pose viewer (`Pose.fix_style`), plus the suggested fix at each conflict. Default `false` |
+| `visualize` | `true` to plot the result, with the same layers and styles as the correction overlay in the Pose viewer (`Shared.styles`), plus the suggested fix at each conflict. Default `false` |
 
 | Output | Description |
 |---|---|

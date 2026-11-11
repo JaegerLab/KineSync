@@ -85,8 +85,8 @@ Behavior data is open. The info line then shows, for example,
 | Channel list | The channel to display (and to use for the ETA) |
 | Sort by | Order the channel list by a column of the channel map |
 
-Click the plot to move the cursor. Raw data is drawn in blue, processed data
-in green and the preprocessing preview in yellow. Events from the Behavior viewer
+Click the plot to move the cursor. Raw data is drawn in dark blue, processed data
+in green and the preprocessing preview in orange. Events from the Behavior viewer
 appear as magenta circles on the ephys trace.
 
 ## Channel map
@@ -145,7 +145,7 @@ so fast changes alias into the result. Preview and Apply & Close then ask
 before going on. **Process anyway** is fine when a low-pass filter has already
 removed what lies above half the new rate.
 
-- **Preview** processes the selected channel only and draws it in yellow.
+- **Preview** processes the selected channel only and draws it in orange.
 - **Apply & Close** processes all channels and adds a new data type
   `Processed N`. Earlier results are kept.
 - **Cancel** discards the preview.

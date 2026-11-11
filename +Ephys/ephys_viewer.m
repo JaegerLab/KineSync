@@ -50,27 +50,28 @@ function fig = ephys_viewer()
         % All plots are made here, empty and hidden, and later only get new
         % data: creation order is drawing order. The right axis (digital
         % channel) is always drawn over the left one.
+        style = Shared.styles();
         yyaxis(hd.ax, 'right'); hold(hd.ax, 'on');
-        hd.digitalPlot = plot(hd.ax, NaN, NaN, 'y-', 'Visible', 'off', 'HitTest', 'off', ...
-            'Tag', 'digitalPlot');
+        hd.digitalPlot = plot(hd.ax, NaN, NaN, '-', 'Color', style.digitalColor, ...
+            'Visible', 'off', 'HitTest', 'off', 'Tag', 'digitalPlot');
         hd.ax.YAxis(2).Limits = [-0.1 1.1];
         hd.ax.YAxis(2).TickValues = [0 1];
-        hd.ax.YAxis(2).Color = 'y';
+        hd.ax.YAxis(2).Color = style.digitalColor;
         hd.ax.YAxis(2).Visible = 'off';
         yyaxis(hd.ax, 'left'); hold(hd.ax, 'on');
-        hd.ax.YAxis(1).Color = 'k';   % yyaxis recolours the left axis
+        hd.ax.YAxis(1).Color = style.leftAxisColor;   % yyaxis recolours the left axis
         % left axis, bottom to top: time line, data, preview, event markers.
         % The time line is a plain line: an xline is always drawn on top.
         % It reaches past any y range and is left out of the axis limits.
-        hd.timeline = plot(hd.ax, [0 0], [-1e12 1e12], 'k-', ...
+        hd.timeline = plot(hd.ax, [0 0], [-1e12 1e12], '-', 'Color', style.timeline, ...
             'XLimInclude', 'off', 'YLimInclude', 'off', ...
             'Visible', 'off', 'HitTest', 'off', 'Tag', 'timeline');
-        hd.dataPlot = plot(hd.ax, NaN, NaN, 'b-', 'Visible', 'off', ...
+        hd.dataPlot = plot(hd.ax, NaN, NaN, '-', 'Color', style.rawColor, 'Visible', 'off', ...
             'ButtonDownFcn', @axClicked, 'Tag', 'dataPlot');
-        hd.tempPlot = plot(hd.ax, NaN, NaN, 'y-', 'Visible', 'off', ...
+        hd.tempPlot = plot(hd.ax, NaN, NaN, '-', 'Color', style.previewColor, 'Visible', 'off', ...
             'ButtonDownFcn', @axClicked, 'Tag', 'tempPlot');
-        hd.eventMarker = scatter(hd.ax, NaN, NaN, 'Marker', 'o', 'MarkerEdgeColor', 'm', ...
-            'LineWidth', 2, 'Visible', 'off', 'HitTest', 'off', 'Tag', 'eventMarker');
+        hd.eventMarker = scatter(hd.ax, NaN, NaN, 'Marker', 'o', 'MarkerEdgeColor', style.eventColor, ...
+            'LineWidth', style.eventWidth, 'Visible', 'off', 'HitTest', 'off', 'Tag', 'eventMarker');
     
         subgrid3 = uigridlayout(grid1, [2 1], Padding=[0 0 0 0], ...
             RowHeight={'1x', 30});
@@ -493,10 +494,11 @@ function fig = ephys_viewer()
         end
         channels = hd.chanList.Value;
 
-        % selected data type: raw blue, processed green
+        % selected data type: raw or processed color (Shared.styles)
         src = currentSource();
-        color = 'g';
-        if strcmp(hd.datatype.Value, 'Raw'), color = 'b'; end
+        style = Shared.styles();
+        color = style.processedColor;
+        if strcmp(hd.datatype.Value, 'Raw'), color = style.rawColor; end
         set(hd.dataPlot, 'XData', src.t, 'YData', src.data(:,channels), ...
             'Color', color, 'Visible', 'on');
         % pre-process preview, over its source

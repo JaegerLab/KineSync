@@ -1,8 +1,9 @@
 function img = draw_markers(img, state, frameIdx, frameT, pxPerPoint)
 % img = Video.draw_markers(img, state, frameIdx, frameT, pxPerPoint)
 % Draw the video viewer's markers into one frame (pixel drawing, no GUI):
-%   magenta 'o' event markers, alpha 2./(1+exp(|tEvent - tFrame|))
-%   cyan '+' committed pose marker on top (state.pose.x/y at frameIdx)
+%   'o' event markers, alpha 2./(1+exp(|tEvent - tFrame|))
+%   '+' committed pose marker on top (state.pose.x/y at frameIdx)
+% Colors and line widths come from Shared.styles (magenta and cyan by default).
 % Sizes follow the screen: markers 6 pt across, lines 2 pt wide.
 %   img         H x W x 3 (or H x W, made RGB) frame
 %   state       struct with pose ([] or x, y per frame) and events ([] or t, x, y)
@@ -15,20 +16,22 @@ function img = draw_markers(img, state, frameIdx, frameT, pxPerPoint)
     if isinteger(img), peak = double(intmax(cls)); end
     out = double(img);
 
+    style = Shared.styles();
     marker = 6 * pxPerPoint;           % diameter / width of the markers
-    width = max(1, 2 * pxPerPoint);    % line width
+    eventWidth = max(1, style.eventWidth * pxPerPoint);       % line widths
+    poseWidth = max(1, style.poseMarkerWidth * pxPerPoint);
 
     if ~isempty(state.events) && ~isempty(state.events.t)
         alpha = 2 ./ (1 + exp(abs(state.events.t - frameT)));
         for k = 1:numel(state.events.t)
-            out = blend(out, ringMask(size(out), state.events.x(k), state.events.y(k), marker/2, width), ...
-                [1 0 1] * peak, alpha(k));
+            out = blend(out, ringMask(size(out), state.events.x(k), state.events.y(k), marker/2, eventWidth), ...
+                style.eventColor * peak, alpha(k));
         end
     end
     d = state.pose;
     if ~isempty(d) && frameIdx <= numel(d.x)
-        out = blend(out, plusMask(size(out), d.x(frameIdx), d.y(frameIdx), marker/2, width), ...
-            [0 1 1] * peak, 1);
+        out = blend(out, plusMask(size(out), d.x(frameIdx), d.y(frameIdx), marker/2, poseWidth), ...
+            style.poseMarkerColor * peak, 1);
     end
     if peak > 1, out = round(out); end
     img = cast(out, cls);

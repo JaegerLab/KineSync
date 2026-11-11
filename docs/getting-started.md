@@ -83,6 +83,10 @@ restarts. The positions are kept in the MATLAB preferences (group
 monitor that is no longer connected opens on the nearest one. Loading a
 session places the windows where the session saved them.
 
+All windows draw the same kind of data in the same color, for example magenta
+event circles and a black cursor line. The colors are set in one place,
+`+Shared/styles.m`; change a value there to change it in every window.
+
 The Ephys, Pose and Behavior viewers all have these buttons below their plot:
 
 | Button | Action |

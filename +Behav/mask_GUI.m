@@ -561,13 +561,14 @@ function maskFig = mask_GUI(mousePos)
 
         cla(speedPlotAxes);
         hold(speedPlotAxes, 'on');
+        style = Shared.styles();
         speedBadLine = plot(speedPlotAxes, x, badSpeed, ...
-            'Color', [0.67 0.74 0.80], 'LineWidth', 1);
+            'Color', style.unmaskedColor, 'LineWidth', 1);
         speedGoodLine = plot(speedPlotAxes, x, goodSpeed, ...
-            'Color', [0.04 0.27 0.55], 'LineWidth', 1.25);
+            'Color', style.maskedColor, 'LineWidth', 1.25);
         speedThresholdLine = yline(speedPlotAxes, ...
             state.SpeedThreshold, '--', 'Threshold', ...
-            'Color', [0.25 0.25 0.25], 'LineWidth', 1);
+            'Color', style.maskPreviewThresh, 'LineWidth', 1);
         hold(speedPlotAxes, 'off');
         grid(speedPlotAxes, 'off');
         title(speedPlotAxes, state.SpeedSource, 'Interpreter', 'none');

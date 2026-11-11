@@ -344,10 +344,11 @@ function fig = behav_viewer()
         unmask = unmask | unmask([1 1:end-1]) | unmask([2:end end]);
         traceUnmask = trace; traceUnmask(~unmask) = NaN;
         traceMask = trace; traceMask(~mask) = NaN;
+        style = Shared.styles();
         hd = Shared.myPlot(@plot, hd, 'pawUnmask', hd.ax, t, traceUnmask, ...
-            'Color', '#AAAACC', 'HitTest', 'off');
+            'Color', style.unmaskedColor, 'HitTest', 'off');
         hd = Shared.myPlot(@plot, hd, 'pawMask', hd.ax, t, traceMask, ...
-            'Color', '#0000CC', 'HitTest', 'off');
+            'Color', style.maskedColor, 'HitTest', 'off');
 
         % plot threshold line
         % Preview colors may change; thresholds and events use committed data.
@@ -355,15 +356,15 @@ function fig = behav_viewer()
         hd.pawthresh.Value = thresh; % restore threhold display.
         hd = Shared.myPlot(@yline, hd, 'pawThresLine', hd.ax, ...
                         [], thresh, ...
-                        'b:', 'HitTest', 'off');
+                        ':', 'Color', style.threshColor, 'HitTest', 'off');
 
         % time line
         hd = Shared.myPlot(@xline, hd, 'timeline', hd.ax, ...
                         data.currentTime, [], ...
-                        'k-', 'HitTest', 'off');
+                        '-', 'Color', style.timeline, 'HitTest', 'off');
 
         % speed-threshold part of a mask preview, on the right y axis:
-        % speed black where good, gray where bad, and the threshold
+        % speed where good and where bad, and the threshold (Shared.styles)
         if hasSpeedPreview(t)
             sp = data.behav.maskTempSpeed;
             good = logical(sp.good(:));
@@ -373,15 +374,15 @@ function fig = behav_viewer()
             speedBad = sp.speed(:); speedBad(~bad) = NaN;
             yyaxis(hd.ax, 'right'); hold(hd.ax, 'on');
             hd = Shared.myPlot(@plot, hd, 'maskSpeedBad', hd.ax, sp.t, speedBad, ...
-                'Color', [0.6 0.6 0.6], 'LineStyle', '-', 'Marker', 'none', 'HitTest', 'off');
+                'Color', style.maskPreviewBad, 'LineStyle', '-', 'Marker', 'none', 'HitTest', 'off');
             hd = Shared.myPlot(@plot, hd, 'maskSpeedGood', hd.ax, sp.t, speedGood, ...
-                'Color', 'k', 'LineStyle', '-', 'Marker', 'none', 'HitTest', 'off');
+                'Color', style.maskPreviewGood, 'LineStyle', '-', 'Marker', 'none', 'HitTest', 'off');
             hd = Shared.myPlot(@yline, hd, 'maskSpeedThres', hd.ax, ...
-                [], sp.threshold, 'k--', 'HitTest', 'off');
+                [], sp.threshold, '--', 'Color', style.maskPreviewThresh, 'HitTest', 'off');
             ylabel(hd.ax, 'Mask speed (cm/s)');
-            hd.ax.YAxis(2).Color = 'k';
+            hd.ax.YAxis(2).Color = style.maskPreviewGood;
             yyaxis(hd.ax, 'left');
-            hd.ax.YAxis(1).Color = [0.15 0.15 0.15];   % yyaxis recolours the left axis
+            hd.ax.YAxis(1).Color = style.leftAxisColor;   % yyaxis recolours the left axis
         end
 
         data.behav.hd = hd;
@@ -538,10 +539,11 @@ function fig = behav_viewer()
             hd.eventNum.Value = length(eventIdx);
 
             selectedTrace = data.behav.paw(pawIdx).(data.behav.selection.trace);
+            style = Shared.styles();
             hd = Shared.myPlot(@scatter, hd, 'eventMarker', hd.ax, ...
                             eventT, selectedTrace(eventIdx), ...
-                            'Marker', 'o', 'MarkerEdgeColor', 'm', 'LineWidth', 2, ...
-                            'HitTest', 'off');
+                            'Marker', 'o', 'MarkerEdgeColor', style.eventColor, ...
+                            'LineWidth', style.eventWidth, 'HitTest', 'off');
             hd.eventMarker.Visible = 'on';
         elseif isfield(hd, 'eventMarker') && isgraphics(hd.eventMarker)
             hd.eventMarker.Visible = 'off';
@@ -625,9 +627,10 @@ function fig = behav_viewer()
         data.behav.paw(pawIdx).thresh.(traceType) = hd.pawthresh.Value;
 
         % update threhold line
+        style = Shared.styles();
         data.behav.hd = Shared.myPlot(@yline, hd, 'pawThresLine', hd.ax, ...
                 [], hd.pawthresh.Value, ...
-                'b:', 'HitTest', 'off');
+                ':', 'Color', style.threshColor, 'HitTest', 'off');
 
         % redo event detection.
         getEvents();

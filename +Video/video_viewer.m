@@ -423,12 +423,14 @@ end
 % from the frame: alpha = 2/(1+exp(|tEvent - tFrame| / 1 s)).
 function drawMarkers(state, frameIdx)
     hd = data.video.hd;
+    style = Shared.styles();
 
     % behavior events
     if ~isempty(state.events) && ~isempty(state.events.t)
         hd = Shared.myPlot(@scatter, hd, 'eventMarker', hd.ax, ...
             state.events.x, state.events.y, ...
-            'Marker', 'o', 'MarkerEdgeColor', 'm', 'LineWidth', 2, 'HitTest', 'off');
+            'Marker', 'o', 'MarkerEdgeColor', style.eventColor, ...
+            'LineWidth', style.eventWidth, 'HitTest', 'off');
         frameT = data.video.t(frameIdx);
         set(hd.eventMarker, 'AlphaData', eventAlpha(state.events.t, frameT), ...
             'MarkerEdgeAlpha', 'flat', 'Visible', 'on');
@@ -444,13 +446,15 @@ function drawMarkers(state, frameIdx)
     else
         if ~isempty(d.tempX)
             hd = Shared.myPlot(@plot, hd, 'poseTempMarker', hd.ax, ...
-                d.tempX(frameIdx), d.tempY(frameIdx), 'go', 'LineWidth', 2, 'HitTest','off');
+                d.tempX(frameIdx), d.tempY(frameIdx), 'o', 'Color', style.posePreviewColor, ...
+                'LineWidth', style.poseMarkerWidth, 'HitTest','off');
             hd.poseTempMarker.Visible = 'on';
         else
             hd = hideMarker(hd, 'poseTempMarker');
         end
         hd = Shared.myPlot(@plot, hd, 'poseMarker', hd.ax, ...
-            d.x(frameIdx), d.y(frameIdx), 'c+', 'LineWidth', 2, 'HitTest','off');
+            d.x(frameIdx), d.y(frameIdx), '+', 'Color', style.poseMarkerColor, ...
+            'LineWidth', style.poseMarkerWidth, 'HitTest','off');
         hd.poseMarker.Visible = 'on';
         uistack(hd.poseMarker, "top")
     end

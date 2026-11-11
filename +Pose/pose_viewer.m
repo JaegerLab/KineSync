@@ -198,7 +198,7 @@ function fig = pose_viewer()
         if ~data.has('pose'); return; end
 
         hd = data.pose.hd;
-        S = Pose.fix_style();
+        S = Shared.styles();
         
         bodypart = hd.bodypart.Value;
 
@@ -289,7 +289,8 @@ function fig = pose_viewer()
         events = Behav.current_events(data);
         if data.has('pose') && ~isempty(events) && ~isempty(events.t)
             if numel(hd.ax.YAxis) > 1, yyaxis(hd.ax, 'left'); end
-            spec = {'Marker', 'o', 'MarkerEdgeColor', 'm', 'LineWidth', 2, ...
+            S = Shared.styles();
+            spec = {'Marker', 'o', 'MarkerEdgeColor', S.eventColor, 'LineWidth', S.eventWidth, ...
                 'HitTest', 'off', 'HandleVisibility', 'off'};
             hd = Shared.myPlot(@scatter, hd, 'eventX', hd.ax, events.t, events.x, spec{:});
             hd = Shared.myPlot(@scatter, hd, 'eventY', hd.ax, events.t, events.y, spec{:});
@@ -309,7 +310,7 @@ function fig = pose_viewer()
     % the same DisplayName): use the x copy, or the y copy when x is hidden.
     % Hidden or empty layers are left out.
     function updateLegend(hd)
-        S = Pose.fix_style();
+        S = Shared.styles();
         h = gobjects(0);
         for f = {'xplot', 'yplot', 'pplot'}
             if isfield(hd, f{1}) && isgraphics(hd.(f{1})) && isOn(hd.(f{1}))
@@ -403,7 +404,7 @@ function fig = pose_viewer()
     % show/hide all fix layers of one coordinate; segment labels and
     % attention signs also follow the Pose auto fix checkboxes (fixShow)
     function hd = setFixVisible(hd, sfx, trueFalse)
-        S = Pose.fix_style();
+        S = Shared.styles();
         show = struct('labels', true, 'attn', true);
         if isfield(data.pose, 'fixShow'), show = data.pose.fixShow; end
         f = fieldnames(hd);
@@ -576,7 +577,7 @@ function fig = pose_viewer()
 
     % frame at such that the clicked jump lies between frames a and a+1
     function a = jumpAtClick(src, tc, t, seg, hd)
-        S = Pose.fix_style();
+        S = Shared.styles();
         isJumpLine = isprop(src, 'Tag') && startsWith(src.Tag, 'fix_jump');
         xl = xlim(hd.ax);
         tol = S.snapPx * diff(xl) / max(1, hd.ax.InnerPosition(3));
@@ -626,7 +627,8 @@ function fig = pose_viewer()
             return;
         end
         if numel(hd.ax.YAxis) > 1, yyaxis(hd.ax, 'left'); end
-        hd.timelinePose = plot(hd.ax, [1 1]*data.currentTime, [-1e12 1e12], 'k-', ...
+        S = Shared.styles();
+        hd.timelinePose = plot(hd.ax, [1 1]*data.currentTime, [-1e12 1e12], '-', 'Color', S.timeline, ...
             'XLimInclude', 'off', 'YLimInclude', 'off', 'HitTest', 'off', 'HandleVisibility', 'off', ...
             'Tag', 'timelinePose');
     end

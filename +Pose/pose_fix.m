@@ -394,8 +394,8 @@ end
 % ==========================================================================
 function plot_result(x, y, xFix, yFix, seg)
 % The same layers and styles as the fix overlay in the Pose viewer
-% (Pose.fix_style), plus the suggestion for each conflict.
-S = Pose.fix_style();
+% (Shared.styles), plus the suggestion for each conflict.
+S = Shared.styles();
 N = numel(x); t = (1:N)';
 fe = repelem(seg.flag, seg.len);            % flag per frame
 good = fe > 0;

@@ -1,8 +1,9 @@
-function S = fix_style()
-% S = Pose.fix_style()
-% All display choices and attention thresholds of the fix overlay, shared
-% by the Pose viewer and Pose.pose_fix(..., visualize).
-% Magenta is reserved for event markers; yellow is avoided (invisible on white).
+function S = styles()
+% S = Shared.styles()
+% Colors and other display choices shared by all modules, so each kind of
+% data looks the same in every window. S.colors is the palette; the other
+% fields give each plotted item its color from it.
+% Magenta is reserved for event markers.
 C.blueDark  = [0.00 0.24 0.62];
 C.blueLight = [0.35 0.66 1.00];
 C.blueGrey  = [0.66 0.80 1.00];
@@ -11,14 +12,46 @@ C.red       = [0.85 0.10 0.10];
 C.orange    = [1.00 0.50 0.00];
 C.grey      = [0.55 0.55 0.55];
 C.yellow    = [0.90 0.80 0.00];
+C.black     = [0 0 0];
+C.cyan      = [0 1 1];
+C.magenta   = [1 0 1];
+S.colors = C;
 
-% traces
+%% All modules
+S.leftAxisColor = [0.15 0.15 0.15];   % MATLAB default; yyaxis would recolour it
+S.timeline = C.black;                 % cursor line at the current time
+S.eventColor = C.magenta;             % event circles in every viewer and the video
+S.eventWidth = 2;
+
+%% Video
+S.poseMarkerColor = C.cyan;           % '+' at the selected body part
+S.posePreviewColor = C.green;         % 'o' at the Pose Fix preview
+S.poseMarkerWidth = 2;
+
+%% Ephys
+S.rawColor = C.blueDark;              % raw data
+S.processedColor = C.green;           % processed data
+S.previewColor = C.orange;            % pre-process preview
+S.digitalColor = C.yellow;            % digital channel, right axis
+
+%% Behavior and Edit Mask
+S.maskedColor = C.blueDark;           % trace inside the mask (analysed)
+S.unmaskedColor = C.blueGrey;         % trace outside the mask
+S.threshColor = C.blueDark;           % paw threshold (dotted)
+S.maskPreviewGood = C.black;          % mask preview speed, passing the threshold
+S.maskPreviewBad = C.grey;            % mask preview speed, failing it
+S.maskPreviewThresh = C.black;        % mask preview speed threshold (dashed)
+
+%% Event-triggered average
+S.etaColor = C.black;                 % ETA line, control mean and band
+
+%% Pose traces
 S.xColor = C.blueDark;          % x trace
 S.yColor = C.blueLight;         % y trace
-S.pColor = C.yellow;          % p trace
-S.leftAxisColor = [0.15 0.15 0.15];   % MATLAB default; yyaxis would recolour it
+S.pColor = C.yellow;            % p trace
 S.trace  = 1;                   % trace line width
 
+%% Pose Fix overlay, shared by the Pose viewer and Pose.pose_fix(..., visualize)
 % interpolation (behind the trace)
 S.interpColor = C.green;
 S.interpStyle = ':';
