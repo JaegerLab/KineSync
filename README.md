@@ -20,7 +20,7 @@ It detects events from body-part trajectories and computes event-triggered avera
   segmenting each trajectory at jumps and interpolating through trusted
   segments. You can review and edit the result.
 - **Behavior.** Detects events from body-part x, y or speed (threshold crossings,
-  movement onset and offset, peaks, valleys). Time-based and speed-based masks
+  movement onset and offset, peaks, valleys). Time-based and trace-threshold masks
   exclude unwanted periods.
 - **Event-triggered average.** Averages an ephys signal (for example rectified EMG) around behavioral events against a chosen
   null distribution (dithered, shuffled or random events), with a ±3 SD band.

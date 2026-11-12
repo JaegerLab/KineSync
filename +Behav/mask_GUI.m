@@ -28,21 +28,28 @@ function maskFig = mask_GUI(mousePos)
     state.SelectedRow = NaN;
     state.NextRuleID  = uint64(1);
 
-    state.Speed = double.empty(0,1);
-    state.SpeedTime = double.empty(0,1);
-    state.SpeedSource = "";
-    state.SpeedUnits = 'cm/s';
+    % Trace: any per-frame or timestamped quantity to threshold, e.g. a
+    % body-part X, Y or speed, or an Ephys digital channel.
+    %   TraceTime   - empty (one value per behavior frame) or sample times
+    %   TraceUnits  - shown in the plot; 'pixels/frame' is converted to cm/s
+    %   TraceInterp - 'linear' for sampled data, 'previous' for step data
+    %                 (digital channels: each value holds until the next)
+    state.Trace = double.empty(0,1);
+    state.TraceTime = double.empty(0,1);
+    state.TraceSource = "";
+    state.TraceUnits = '';
+    state.TraceInterp = 'linear';
     state.SmoothEnabled = false;
     state.SmoothWindow = 1;
-    state.SpeedOperator = '>';
-    state.SpeedThreshold = 0;
-    state.ImportSource = 'from Pose';
+    state.TraceOperator = '>';
+    state.TraceThreshold = 0;
+    state.ImportSource = 'from Behavior';
 
     defaultState = state;
 
-    speedGoodLine = gobjects(0);
-    speedBadLine = gobjects(0);
-    speedThresholdLine = gobjects(0);
+    importSources = {'from Behavior', 'from Pose', 'from Ephys', ...
+        'from File', 'from Workspace'};
+    validUnits = ["", "cm", "cm/s", "pixels", "pixels/frame"];
 
     data = Shared.SessionData.instance();
     
@@ -75,76 +82,76 @@ function maskFig = mask_GUI(mousePos)
         'Text', 'Cancel', ...
         'ButtonPushedFcn', @cancelAndClose);
 
-    %% Speed-threshold tab.
-    speedTab = uitab(tabGroup, 'Title', 'Speed threshold');
+    %% Trace-threshold tab.
+    traceTab = uitab(tabGroup, 'Title', 'Trace threshold');
 
-    speedGrid = uigridlayout(speedTab, [5 2], Padding=[20,20,20,20]);
-    speedGrid.RowHeight = {
+    traceGrid = uigridlayout(traceTab, [5 2], Padding=[20,20,20,20]);
+    traceGrid.RowHeight = {
         'fit'   % import buttons
         'fit'   % smoothing controls
         'fit'   % threshold controls
         'fit'   % status label
         '1x'    % plot preview
         };
-    speedGrid.ColumnWidth = {120, '1x'};
+    traceGrid.ColumnWidth = {120, '1x'};
 
-    
+
     % Import controls
     importSourceDropDown = uidropdown( ...
-        speedGrid, ...
-        'Items', {'from Pose', 'from File', 'from Workspace'}, ...
-        'Value', 'from Pose');
-    
+        traceGrid, ...
+        'Items', importSources, ...
+        'Value', 'from Behavior');
+
     uibutton( ...
-        speedGrid, ...
+        traceGrid, ...
         'push', ...
-        'Text', 'Import Speed', ...
-        'ButtonPushedFcn', @importSpeed);
+        'Text', 'Import Trace', ...
+        'ButtonPushedFcn', @importTrace);
 
     % Smoothing controls
     smoothCheckBox = uicheckbox( ...
-        speedGrid, ...
+        traceGrid, ...
         'Text', 'Smooth', ...
         'Value', false, ...
         'ValueChangedFcn', @smoothSettingChanged);
     
     smoothWindowField = uieditfield( ...
-        speedGrid, ...
+        traceGrid, ...
         'numeric', ...
         'Value', 1, ...
         'Limits', [0 Inf], 'LowerLimitInclusive', 'off', ...
         'Enable', 'off', ...
-        'ValueChangedFcn', @speedParameterChanged, ...
+        'ValueChangedFcn', @traceParameterChanged, ...
         'ValueDisplayFormat','Smooth Window: %.2f s');
-    
+
     % Threshold controls
-    speedOperatorDropDown = uidropdown( ...
-        speedGrid, ...
+    traceOperatorDropDown = uidropdown( ...
+        traceGrid, ...
         'Items', {'>', '<'}, ...
         'Value', '>', ...
-        'ValueChangedFcn', @speedParameterChanged);
-    
-    speedThresholdField = uieditfield( ...
-        speedGrid, ...
+        'ValueChangedFcn', @traceParameterChanged);
+
+    traceThresholdField = uieditfield( ...
+        traceGrid, ...
         'numeric', ...
         'Value', 0, ...
-        'ValueChangedFcn', @speedParameterChanged, ...
+        'ValueChangedFcn', @traceParameterChanged, ...
         'ValueDisplayFormat','Threshold: %.2f');
-    
+
     % Status area
-    speedStatusLabel = uilabel( ...
-        speedGrid, ...
+    traceStatusLabel = uilabel( ...
+        traceGrid, ...
         'Text', '', ...
         'VerticalAlignment', 'top', 'WordWrap', 'on', ...
         'Layout', matlab.ui.layout.GridLayoutOptions('Row', 4, 'Column', [1 2]));
 
     % Preview plot
-    speedPlotAxes = uiaxes(speedGrid);
-    speedPlotAxes.Layout.Row = 5;
-    speedPlotAxes.Layout.Column = [1 2];
-    speedPlotAxes.XLabel.String = 'Time (s)';
-    speedPlotAxes.YLabel.String = 'Speed';
-    speedPlotAxes.Box = 'off';
+    tracePlotAxes = uiaxes(traceGrid);
+    tracePlotAxes.Layout.Row = 5;
+    tracePlotAxes.Layout.Column = [1 2];
+    tracePlotAxes.XLabel.String = 'Time (s)';
+    tracePlotAxes.YLabel.String = 'Trace';
+    tracePlotAxes.Box = 'off';
 
     %% Manual-rule tab 
     manualTab = uitab( ...
@@ -249,21 +256,25 @@ function maskFig = mask_GUI(mousePos)
 
     % Keep the rule table and plot synchronized with restored state.
     refreshRuleTable();
-    updateSpeedPlot();
+    updateTracePlot();
 
-    %% Speed threshold functions
-    function importSpeed(~, ~)
+    %% Trace threshold functions
+    function importTrace(~, ~)
         switch importSourceDropDown.Value
+            case 'from Behavior'
+                importTraceFromBehavior()
             case 'from Pose'
-                importSpeedFromPose()
+                importTraceFromPose()
+            case 'from Ephys'
+                importTraceFromEphys()
             case 'from File'
-                readSpeedFromFile()
+                readTraceFromFile()
             case 'from Workspace'
-                importSpeedFromWorkspace()
+                importTraceFromWorkspace()
         end
     end
 
-    function readSpeedFromFile()
+    function readTraceFromFile()
         startIn = data.defaultPath;
         if ~isempty(startIn), startIn = [startIn filesep]; end
         [fileName, folder] = uigetfile( ...
@@ -272,7 +283,7 @@ function maskFig = mask_GUI(mousePos)
             '*.csv;*.txt', 'Delimited text (*.csv, *.txt)'
             '*.*',         'All files'
             }, ...
-            'Select speed file', startIn);
+            'Select trace file', startIn);
 
         if isequal(fileName, 0)
             return
@@ -286,33 +297,33 @@ function maskFig = mask_GUI(mousePos)
             case '.mat'
                 loadedData = load(filePath);
     
-                [speed, time] = selectSpeedFromStruct( ...
+                [trace, time] = selectTraceFromStruct( ...
                     loadedData, ...
                     sprintf('Variables in %s', fileName));
-    
+
             case {'.csv', '.txt'}
                 importedData = readmatrix(filePath);
-    
+
                 if isempty(importedData)
-                    error('DrawGUI:EmptySpeedFile', ...
+                    error('DrawGUI:EmptyTraceFile', ...
                         'The selected file contains no numeric data.');
                 end
-    
-                [speed, time] = interpretSpeedMatrix(importedData);
-    
+
+                [trace, time] = interpretTraceMatrix(importedData);
+
             otherwise
-                error('DrawGUI:UnsupportedSpeedFile', ...
-                    'Unsupported speed-file extension: %s', extension);
+                error('DrawGUI:UnsupportedTraceFile', ...
+                    'Unsupported trace-file extension: %s', extension);
         end
-    
-        if isempty(speed)
+
+        if isempty(trace)
             return
         end
 
-        setSpeed(speed, time, "File: " + string(fileName));
+        setTrace(trace, time, "File: " + string(fileName));
     end
 
-    function importSpeedFromWorkspace()
+    function importTraceFromWorkspace()
     
         workspaceInfo = evalin('base', 'whos');
     
@@ -326,14 +337,14 @@ function maskFig = mask_GUI(mousePos)
             uialert( ...
                 maskFig, ...
                 'No numeric variables were found in the base workspace.', ...
-                'Import speed');
+                'Import trace');
             return
         end
-    
+
         variableNames = string({workspaceInfo.name});
-    
+
         [selection, confirmed] = listdlg( ...
-            'PromptString', 'Select speed variable:', ...
+            'PromptString', 'Select trace variable:', ...
             'SelectionMode', 'single', ...
             'ListString', cellstr(variableNames), ...
             'ListSize', [300 300]);
@@ -346,26 +357,49 @@ function maskFig = mask_GUI(mousePos)
         value = evalin('base', variableName);
     
         if isvector(value)
-            speed = value(:);
+            trace = value(:);
             time = double.empty(0,1);
-    
+
         elseif ismatrix(value) && size(value,2) == 2
             time  = value(:,1);
-            speed = value(:,2);
-    
+            trace = value(:,2);
+
         else
-            error('DrawGUI:InvalidWorkspaceSpeed', ...
+            error('DrawGUI:InvalidWorkspaceTrace', ...
                 ['The selected variable must be a vector or an N-by-2 ' ...
-                 'matrix containing [time, speed].']);
+                 'matrix containing [time, trace].']);
         end
-    
-        setSpeed( ...
-            speed, ...
+
+        setTrace( ...
+            trace, ...
             time, ...
             "Workspace: " + variableName);
     end
 
-    function importSpeedFromPose(~, ~)
+    % Body-part X, Y or speed of the Behavior module, one value per frame,
+    % in cm and cm/s.
+    function importTraceFromBehavior()
+        if ~data.has('behav') || ~isfield(data.behav, 'bodypart') || ...
+                isempty(data.behav.bodypart)
+            uialert(maskFig, 'Import behavior data first.', 'No behavior data');
+            return
+        end
+        partList = {data.behav.bodypart.name};
+        [bodyIdx, quantity] = chooseBodypartTrace(partList);
+        if isempty(bodyIdx), return; end
+        bodypart = data.behav.bodypart(bodyIdx);
+        switch quantity
+            case 'X',     trace = bodypart.x;     units = 'cm';
+            case 'Y',     trace = bodypart.y;     units = 'cm';
+            case 'Speed', trace = bodypart.speed; units = 'cm/s';
+        end
+        setTrace(trace(:), [], ...
+            "Behavior: " + string(partList{bodyIdx}) + " " + quantity, units);
+    end
+
+    % Body-part X, Y (pixels) or speed (pixels/frame, shown in cm/s) from
+    % the Pose module, or from the Behavior module's raw pose.
+    function importTraceFromPose()
         if data.has('pose')
             partList = data.pose.hd.bodypart.Items;
         elseif data.has('behav')
@@ -373,10 +407,8 @@ function maskFig = mask_GUI(mousePos)
         else
             uialert(maskFig, 'Import behavior or pose data first.', 'No pose data'); return;
         end
-        [bodyIdx, tf] = listdlg('PromptString','Select bodypart:', ...
-            'ListString',partList, 'SelectionMode','single');
-        drawnow; figure(maskFig);
-        if ~tf, return; end
+        [bodyIdx, quantity] = chooseBodypartTrace(partList);
+        if isempty(bodyIdx), return; end
         bodyName = partList{bodyIdx};
         if data.has('pose')
             x = data.pose.table.([bodyName '_x']);
@@ -385,138 +417,247 @@ function maskFig = mask_GUI(mousePos)
             x = data.behav.bodypart(bodyIdx).rawX;
             y = data.behav.bodypart(bodyIdx).rawY;
         end
-        speed = Behav.smooth_speed(x,y,1);
-        setSpeed(speed(:), [], "Pose: " + string(bodyName), 'pixels/frame');
+        switch quantity
+            case 'X',     trace = x; units = 'pixels';
+            case 'Y',     trace = y; units = 'pixels';
+            case 'Speed', trace = Behav.smooth_speed(x,y,1); units = 'pixels/frame';
+        end
+        setTrace(trace(:), [], ...
+            "Pose: " + string(bodyName) + " " + quantity, units);
+    end
+
+    % Asks for a body part, then X, Y or Speed; empty bodyIdx if cancelled.
+    function [bodyIdx, quantity] = chooseBodypartTrace(partList)
+        quantity = '';
+        [bodyIdx, tf] = listdlg('PromptString','Select bodypart:', ...
+            'ListString',partList, 'SelectionMode','single');
+        drawnow; figure(maskFig);
+        if ~tf, bodyIdx = []; return; end
+        quantities = {'X', 'Y', 'Speed'};
+        [k, tf] = listdlg('PromptString', ...
+            sprintf('Select trace of %s:', partList{bodyIdx}), ...
+            'ListString', quantities, 'SelectionMode', 'single', ...
+            'ListSize', [200 100]);
+        drawnow; figure(maskFig);
+        if ~tf, bodyIdx = []; return; end
+        quantity = quantities{k};
+    end
+
+    % An Ephys digital channel as a 0/1 step trace on the Ephys clock: the
+    % level changes at each rising or falling edge and holds until the next.
+    % Outside the recording the level is unknown (NaN, masked out).
+    function importTraceFromEphys()
+        if isempty(data.ephys) || ~isfield(data.ephys, 'digital') || ...
+                isempty(data.ephys.digital)
+            uialert(maskFig, 'Open an ephys recording with digital channels first.', ...
+                'No digital channels');
+            return
+        end
+        digital = data.ephys.digital;
+        labels = arrayfun(@Ephys.ttl_stats, digital, 'UniformOutput', false);
+        [k, tf] = listdlg('PromptString', 'Select digital channel:', ...
+            'ListString', labels, 'SelectionMode', 'single', ...
+            'ListSize', [300 200]);
+        drawnow; figure(maskFig);
+        if ~tf, return; end
+        channel = digital(k);
+
+        edgeTime  = [channel.rise(:); channel.fall(:)];
+        edgeLevel = [ones(numel(channel.rise), 1); zeros(numel(channel.fall), 1)];
+        [edgeTime, order] = sort(edgeTime);
+        edgeLevel = edgeLevel(order);
+        % Level before the first edge: the opposite of that edge; low when
+        % the channel never changes.
+        if isempty(edgeLevel)
+            startLevel = 0;
+        else
+            startLevel = 1 - edgeLevel(1);
+        end
+
+        [t0, t1] = ephysSpan();
+        if isnan(t0)
+            % No recording times: start just before the first edge.
+            if isempty(edgeTime), t0 = 0; else, t0 = edgeTime(1) - 1; end
+        end
+        if ~isempty(edgeTime), t0 = min(t0, edgeTime(1)); end
+        time  = [t0; edgeTime];
+        level = [startLevel; edgeLevel];
+        % After the recording the level is unknown.
+        if ~isnan(t1) && t1 > time(end)
+            time(end+1)  = t1;
+            level(end+1) = NaN;
+        end
+        % Edges at the same time: the last one wins.
+        [time, last] = unique(time, 'last');
+        level = level(last);
+
+        if ~isfield(data.ephys, 'sync') || isempty(data.ephys.sync)
+            uialert(maskFig, ['Ephys is not synchronized: frame times are ' ...
+                'frame / frame rate and may not match the ephys clock.'], ...
+                'Not synchronized', 'Icon', 'warning');
+        end
+        setTrace(level, time, "Ephys: " + string(channel.name), '', 'previous');
+    end
+
+    % First and last time of the ephys recording; NaN if unknown.
+    function [t0, t1] = ephysSpan()
+        t0 = NaN; t1 = NaN;
+        t = [];
+        if isfield(data.ephys, 'raw') && ~isempty(data.ephys.raw) && ...
+                isfield(data.ephys.raw, 't')
+            t = data.ephys.raw(1).t;
+        elseif isfield(data.ephys, 'processed') && ~isempty(data.ephys.processed)
+            t = data.ephys.processed(1).t;
+        end
+        if ~isempty(t)
+            t0 = t(1); t1 = t(end);
+        end
     end
 
     function smoothSettingChanged(~, ~)
         state.SmoothEnabled = smoothCheckBox.Value;
         smoothWindowField.Enable = onOff(smoothCheckBox.Value);
-        speedParameterChanged();
+        traceParameterChanged();
     end
 
-    function speedParameterChanged(~, ~)
+    function traceParameterChanged(~, ~)
         captureControlState();
-        updateSpeedStatus();
-        updateSpeedPlot();
+        updateTraceStatus();
+        updateTracePlot();
     end
 
-    function setSpeed(speed, time, source, units)
-        if nargin<4, units = 'cm/s'; end
-    
-        speed = double(speed(:));
+    function setTrace(trace, time, source, units, interpMethod)
+        if nargin < 4, units = ''; end
+        if nargin < 5, interpMethod = 'linear'; end
+
+        trace = double(trace(:));
         time  = double(time(:));
-    
-        if isempty(speed)
-            error('DrawGUI:EmptySpeed', ...
-                'Speed data cannot be empty.');
+
+        if isempty(trace)
+            error('DrawGUI:EmptyTrace', ...
+                'Trace data cannot be empty.');
         end
-    
-        if any(isinf(speed))
-            error('DrawGUI:InvalidSpeed', ...
-                'Speed data contains Inf values.');
+
+        if any(isinf(trace))
+            error('DrawGUI:InvalidTrace', ...
+                'Trace data contains Inf values.');
         end
-    
+
         if ~isempty(time)
-    
-            if numel(time) ~= numel(speed)
-                error('DrawGUI:SpeedTimeSizeMismatch', ...
-                    'Time and speed must contain the same number of elements.');
+
+            if numel(time) ~= numel(trace)
+                error('DrawGUI:TraceTimeSizeMismatch', ...
+                    'Time and trace must contain the same number of elements.');
             end
-    
+
             if any(~isfinite(time)) || any(diff(time) <= 0)
-                error('DrawGUI:InvalidSpeedTime', ...
-                    'The speed time vector must be finite and strictly increasing.');
+                error('DrawGUI:InvalidTraceTime', ...
+                    'The trace time vector must be finite and strictly increasing.');
             end
         end
-    
-        state.Speed       = speed;
-        state.SpeedTime   = time;
-        state.SpeedSource = source;
-        state.SpeedUnits = units;
-    
-        updateSpeedStatus();
-        updateSpeedPlot();
+
+        state.Trace       = trace;
+        state.TraceTime   = time;
+        state.TraceSource = source;
+        state.TraceUnits  = units;
+        state.TraceInterp = interpMethod;
+
+        updateTraceStatus();
+        updateTracePlot();
         syncPublicState();
     end
 
-    function [speed, time] = getRawSpeed()
-    
-        speed = state.Speed;
-        time  = state.SpeedTime;
-    end
+    function [trace, time] = getProcessedTrace()
 
-    function [speed, time] = getProcessedSpeed()
-    
-        speed = state.Speed;
-        time  = state.SpeedTime;
-        if strcmp(state.SpeedUnits, 'pixels/frame')
-            speed = speed * data.getFrameRate()/data.behav.hd.resolution.Value;
+        trace = state.Trace;
+        time  = state.TraceTime;
+        if strcmp(state.TraceUnits, 'pixels/frame')
+            trace = trace * data.getFrameRate()/data.behav.hd.resolution.Value;
         end
-    
-        if isempty(speed)
+
+        if isempty(trace)
             return
         end
-    
+
         if ~isempty(time)
             targetTime = data.behav.t(:);
-            if numel(time) < 2
-                error('DrawGUI:SpeedTime', 'Timestamped speed needs at least two samples.');
+            if strcmp(state.TraceInterp, 'previous')
+                % step data: the last value at or before each frame time
+                k = discretize(targetTime, [time; Inf]);
+                stepped = NaN(size(targetTime));
+                stepped(~isnan(k)) = trace(k(~isnan(k)));
+                trace = stepped;
+            else
+                if numel(time) < 2
+                    error('DrawGUI:TraceTime', 'Timestamped trace needs at least two samples.');
+                end
+                trace = interp1(time, trace, targetTime, 'linear', NaN);
             end
-            speed = interp1(time, speed, targetTime, 'linear', NaN);
             time = targetTime;
         else
             time = data.behav.t(:);
-            if numel(speed) ~= numel(time)
-                error('DrawGUI:SpeedTraceSizeMismatch', 'Untimed speed must match the behavior sample count.');
+            if numel(trace) ~= numel(time)
+                error('DrawGUI:TraceSizeMismatch', 'Untimed trace must match the behavior sample count.');
             end
         end
         if state.SmoothEnabled
             window = getSmoothWindowSamples();
-    
-            missing = ~isfinite(speed);
-            speed = movmean(speed, window, 'omitnan', 'Endpoints', 'shrink');
-            speed(missing) = NaN;
+
+            missing = ~isfinite(trace);
+            trace = movmean(trace, window, 'omitnan', 'Endpoints', 'shrink');
+            trace(missing) = NaN;
         end
     end
 
-    function mask = generateSpeedMask()    
-        if isempty(state.Speed)
+    % Units of the processed trace, '' if none.
+    function units = processedUnits()
+        units = state.TraceUnits;
+        if strcmp(units, 'pixels/frame'), units = 'cm/s'; end
+    end
+
+    function mask = generateTraceMask()
+        if isempty(state.Trace)
             traceSize = getTraceSize();
             nSamples = prod(traceSize);
             mask = true(nSamples, 1);
             return
         end
 
-        [speed, ~] = getProcessedSpeed();
-        threshold = state.SpeedThreshold;
-        switch state.SpeedOperator
+        [trace, ~] = getProcessedTrace();
+        threshold = state.TraceThreshold;
+        switch state.TraceOperator
             case '>'
-                mask = speed > threshold;
+                mask = trace > threshold;
             case '<'
-                mask = speed < threshold;
+                mask = trace < threshold;
             otherwise
-                error('DrawGUI:InvalidSpeedOperator', ...
-                    'Unsupported speed operator.');
+                error('DrawGUI:InvalidTraceOperator', ...
+                    'Unsupported trace operator.');
         end
     end
 
-    function updateSpeedStatus()
-    
-        if isempty(state.Speed)
-            speedStatusLabel.Text = 'No speed data loaded.';
+    function updateTraceStatus()
+
+        if isempty(state.Trace)
+            traceStatusLabel.Text = 'No trace data loaded.';
             return
         end
-    
+
+        units = '';
+        if ~isempty(state.TraceUnits), units = [' ' state.TraceUnits]; end
         text = sprintf( ...
             ['Samples: %d\n' ...
-             'Range: %.6g to %.6g\n' ...
-             'Rule: speed %s %.6g'], ...
-            numel(state.Speed), ...
-            min(state.Speed), ...
-            max(state.Speed), ...
-            state.SpeedOperator, ...
-            state.SpeedThreshold);
+             'Range: %.6g to %.6g%s\n' ...
+             'Rule: trace %s %.6g'], ...
+            numel(state.Trace), ...
+            min(state.Trace), ...
+            max(state.Trace), ...
+            units, ...
+            state.TraceOperator, ...
+            state.TraceThreshold);
+        if ~isempty(processedUnits())
+            text = sprintf('%s %s', text, processedUnits());
+        end
     
         if state.SmoothEnabled
             text = sprintf( ...
@@ -527,7 +668,7 @@ function maskFig = mask_GUI(mousePos)
             text = sprintf('%s\nSmoothing: off', text);
         end
     
-        speedStatusLabel.Text = text;
+        traceStatusLabel.Text = text;
     end
 
     function n = getSmoothWindowSamples()
@@ -541,42 +682,50 @@ function maskFig = mask_GUI(mousePos)
         n = max(1, round(windowSeconds * fs));
     end
 
-    function updateSpeedPlot()
-        if isempty(state.Speed) || ~isvalid(speedPlotAxes)
-            cla(speedPlotAxes);
-            title(speedPlotAxes, 'No speed data loaded');
+    function updateTracePlot()
+        if isempty(state.Trace) || ~isvalid(tracePlotAxes)
+            cla(tracePlotAxes);
+            title(tracePlotAxes, 'No trace data loaded');
+            tracePlotAxes.YLabel.String = 'Trace';
             return
         end
 
-        [speed, x] = getProcessedSpeed();
-        speedPlotAxes.XLabel.String = 'Time (s)';
+        [trace, x] = getProcessedTrace();
+        tracePlotAxes.XLabel.String = 'Time (s)';
+        tracePlotAxes.YLabel.String = traceLabel('Trace');
 
-        good = generateSpeedMask();
-        goodSpeed = speed;
-        badSpeed = speed;
+        good = generateTraceMask();
+        goodTrace = trace;
+        badTrace = trace;
         bad = ~good;
         bad = bad | circshift(bad, 1) | circshift(bad, -1);
-        goodSpeed(~good) = NaN;
-        badSpeed(~bad) = NaN;
+        goodTrace(~good) = NaN;
+        badTrace(~bad) = NaN;
 
-        cla(speedPlotAxes);
-        hold(speedPlotAxes, 'on');
+        cla(tracePlotAxes);
+        hold(tracePlotAxes, 'on');
         style = Shared.styles();
-        speedBadLine = plot(speedPlotAxes, x, badSpeed, ...
+        plot(tracePlotAxes, x, badTrace, ...
             'Color', style.unmaskedColor, 'LineWidth', 1);
-        speedGoodLine = plot(speedPlotAxes, x, goodSpeed, ...
+        plot(tracePlotAxes, x, goodTrace, ...
             'Color', style.maskedColor, 'LineWidth', 1.25);
-        speedThresholdLine = yline(speedPlotAxes, ...
-            state.SpeedThreshold, '--', 'Threshold', ...
+        yline(tracePlotAxes, ...
+            state.TraceThreshold, '--', 'Threshold', ...
             'Color', style.maskPreviewThresh, 'LineWidth', 1);
-        hold(speedPlotAxes, 'off');
-        grid(speedPlotAxes, 'off');
-        title(speedPlotAxes, state.SpeedSource, 'Interpreter', 'none');
-        % legend(speedPlotAxes, [speedGoodLine speedBadLine speedThresholdLine], ...
-        %     {'Good','Bad','Threshold'}, 'Location', 'best');
+        hold(tracePlotAxes, 'off');
+        grid(tracePlotAxes, 'off');
+        title(tracePlotAxes, state.TraceSource, 'Interpreter', 'none');
     end
 
-    function [speed, time] = selectSpeedFromStruct(data, dialogTitle)
+    % name with the processed units, e.g. 'Trace (cm/s)'
+    function label = traceLabel(name)
+        label = name;
+        if ~isempty(processedUnits())
+            label = sprintf('%s (%s)', name, processedUnits());
+        end
+    end
+
+    function [trace, time] = selectTraceFromStruct(data, dialogTitle)
     
         names = string(fieldnames(data));
     
@@ -595,57 +744,57 @@ function maskFig = mask_GUI(mousePos)
         names = names(keep);
     
         if isempty(names)
-            error('DrawGUI:NoSpeedVariables', ...
+            error('DrawGUI:NoTraceVariables', ...
                 ['No numeric vector or N-by-2 numeric matrix was found ' ...
                  'in the selected MAT-file.']);
         end
-    
+
         [selection, confirmed] = listdlg( ...
-            'PromptString', 'Select speed variable:', ...
+            'PromptString', 'Select trace variable:', ...
             'SelectionMode', 'single', ...
             'ListString', cellstr(names), ...
             'ListSize', [300 300], ...
             'Name', dialogTitle);
-    
+
         if ~confirmed
-            speed = double.empty(0,1);
+            trace = double.empty(0,1);
             time  = double.empty(0,1);
             return
         end
-    
+
         value = data.(names(selection));
-    
+
         if isvector(value)
-            speed = value(:);
+            trace = value(:);
             time  = double.empty(0,1);
         else
             time  = value(:,1);
-            speed = value(:,2);
+            trace = value(:,2);
         end
     end
-    function [speed, time] = interpretSpeedMatrix(value)
-    
+    function [trace, time] = interpretTraceMatrix(value)
+
         value = double(value);
-    
+
         % Remove completely empty rows introduced by headers or trailing lines.
         value = value(~all(isnan(value),2), :);
-    
+
         if isvector(value)
-            speed = value(:);
+            trace = value(:);
             time  = double.empty(0,1);
-    
+
         elseif size(value,2) == 1
-            speed = value(:,1);
+            trace = value(:,1);
             time  = double.empty(0,1);
-    
+
         elseif size(value,2) == 2
             time  = value(:,1);
-            speed = value(:,2);
-    
+            trace = value(:,2);
+
         else
-            error('DrawGUI:AmbiguousSpeedFile', ...
-                ['The file must contain either one speed column or two ' ...
-                 'columns arranged as [time, speed].']);
+            error('DrawGUI:AmbiguousTraceFile', ...
+                ['The file must contain either one trace column or two ' ...
+                 'columns arranged as [time, trace].']);
         end
     end
 
@@ -1039,9 +1188,21 @@ function maskFig = mask_GUI(mousePos)
     function captureControlState()
         state.SmoothEnabled = logical(smoothCheckBox.Value);
         state.SmoothWindow = smoothWindowField.Value;
-        state.SpeedOperator = speedOperatorDropDown.Value;
-        state.SpeedThreshold = speedThresholdField.Value;
+        state.TraceOperator = traceOperatorDropDown.Value;
+        state.TraceThreshold = traceThresholdField.Value;
         state.ImportSource = importSourceDropDown.Value;
+    end
+
+    % Settings saved before the speed -> trace rename used Speed* fields.
+    function saved = renameLegacyFields(saved)
+        legacy = {'Speed','Trace'; 'SpeedTime','TraceTime'; ...
+            'SpeedSource','TraceSource'; 'SpeedUnits','TraceUnits'; ...
+            'SpeedOperator','TraceOperator'; 'SpeedThreshold','TraceThreshold'};
+        for k = 1:size(legacy, 1)
+            if isfield(saved, legacy{k,1}) && ~isfield(saved, legacy{k,2})
+                saved.(legacy{k,2}) = saved.(legacy{k,1});
+            end
+        end
     end
 
     function restoreSavedState()
@@ -1051,7 +1212,7 @@ function maskFig = mask_GUI(mousePos)
             return
         end
 
-        saved = data.behav.maskParam;
+        saved = renameLegacyFields(data.behav.maskParam);
         candidate = defaultState;
 
         try
@@ -1076,31 +1237,39 @@ function maskFig = mask_GUI(mousePos)
             end
             candidate.Rules = rules;
 
-            if isfield(saved, 'Speed') && ~isempty(saved.Speed)
-                speed = double(saved.Speed(:));
-                if any(isinf(speed))
+            if isfield(saved, 'Trace') && ~isempty(saved.Trace)
+                trace = double(saved.Trace(:));
+                if any(isinf(trace))
                     return
                 end
-                candidate.Speed = speed;
+                candidate.Trace = trace;
             end
 
-            if isfield(saved, 'SpeedTime') && ~isempty(saved.SpeedTime)
-                speedTime = double(saved.SpeedTime(:));
-                if numel(speedTime) ~= numel(candidate.Speed) || ...
-                        any(~isfinite(speedTime)) || any(diff(speedTime) <= 0)
+            if isfield(saved, 'TraceTime') && ~isempty(saved.TraceTime)
+                traceTime = double(saved.TraceTime(:));
+                if numel(traceTime) ~= numel(candidate.Trace) || ...
+                        any(~isfinite(traceTime)) || any(diff(traceTime) <= 0)
                     return
                 end
-                candidate.SpeedTime = speedTime;
+                candidate.TraceTime = traceTime;
             end
 
-            if isfield(saved,'SpeedUnits') && ismember(string(saved.SpeedUnits), ["cm/s","pixels/frame"])
-                candidate.SpeedUnits = char(saved.SpeedUnits);
+            if isfield(saved, 'TraceUnits') && ...
+                    (ischar(saved.TraceUnits) || isstring(saved.TraceUnits)) && ...
+                    ismember(string(saved.TraceUnits), validUnits)
+                candidate.TraceUnits = char(saved.TraceUnits);
             end
 
-            if isfield(saved, 'SpeedSource') && ...
-                    (ischar(saved.SpeedSource) || ...
-                    (isstring(saved.SpeedSource) && isscalar(saved.SpeedSource)))
-                candidate.SpeedSource = string(saved.SpeedSource);
+            if isfield(saved, 'TraceInterp') && ...
+                    (ischar(saved.TraceInterp) || isstring(saved.TraceInterp)) && ...
+                    any(strcmp(saved.TraceInterp, {'linear','previous'}))
+                candidate.TraceInterp = char(saved.TraceInterp);
+            end
+
+            if isfield(saved, 'TraceSource') && ...
+                    (ischar(saved.TraceSource) || ...
+                    (isstring(saved.TraceSource) && isscalar(saved.TraceSource)))
+                candidate.TraceSource = string(saved.TraceSource);
             end
 
             if isfield(saved, 'SmoothEnabled') && ...
@@ -1122,25 +1291,24 @@ function maskFig = mask_GUI(mousePos)
                 candidate.SmoothWindow = double(saved.SmoothWindow);
             end
 
-            if isfield(saved, 'SpeedOperator') && ...
-                    (ischar(saved.SpeedOperator) || ...
-                    (isstring(saved.SpeedOperator) && isscalar(saved.SpeedOperator))) && ...
-                    any(strcmp(saved.SpeedOperator, {'>','<'}))
-                candidate.SpeedOperator = char(saved.SpeedOperator);
+            if isfield(saved, 'TraceOperator') && ...
+                    (ischar(saved.TraceOperator) || ...
+                    (isstring(saved.TraceOperator) && isscalar(saved.TraceOperator))) && ...
+                    any(strcmp(saved.TraceOperator, {'>','<'}))
+                candidate.TraceOperator = char(saved.TraceOperator);
             end
 
-            if isfield(saved, 'SpeedThreshold') && ...
-                    isnumeric(saved.SpeedThreshold) && ...
-                    isscalar(saved.SpeedThreshold) && ...
-                    isfinite(saved.SpeedThreshold)
-                candidate.SpeedThreshold = double(saved.SpeedThreshold);
+            if isfield(saved, 'TraceThreshold') && ...
+                    isnumeric(saved.TraceThreshold) && ...
+                    isscalar(saved.TraceThreshold) && ...
+                    isfinite(saved.TraceThreshold)
+                candidate.TraceThreshold = double(saved.TraceThreshold);
             end
 
-            validSources = {'from Pose','from File','from Workspace'};
             if isfield(saved, 'ImportSource') && ...
                     (ischar(saved.ImportSource) || ...
                     (isstring(saved.ImportSource) && isscalar(saved.ImportSource))) && ...
-                    any(strcmp(saved.ImportSource, validSources))
+                    any(strcmp(saved.ImportSource, importSources))
                 candidate.ImportSource = char(saved.ImportSource);
             end
 
@@ -1162,8 +1330,8 @@ function maskFig = mask_GUI(mousePos)
         smoothCheckBox.Value = state.SmoothEnabled;
         smoothWindowField.Value = state.SmoothWindow;
         smoothWindowField.Enable = onOff(state.SmoothEnabled);
-        speedOperatorDropDown.Value = state.SpeedOperator;
-        speedThresholdField.Value = state.SpeedThreshold;
+        traceOperatorDropDown.Value = state.TraceOperator;
+        traceThresholdField.Value = state.TraceThreshold;
         importSourceDropDown.Value = state.ImportSource;
     end
 
@@ -1186,28 +1354,29 @@ function maskFig = mask_GUI(mousePos)
 
     function previewMask(~, ~)
         data.behav.maskTemp = buildCombinedMask();
-        % speed and threshold for the Behavior viewer; colored by the speed
+        % trace and threshold for the Behavior viewer; colored by the trace
         % rule only, without the manual rules
-        if isempty(state.Speed)
-            removeSpeedPreview();
+        if isempty(state.Trace)
+            removeTracePreview();
         else
-            [speed, time] = getProcessedSpeed();
-            data.behav.maskTempSpeed = struct('t', time, 'speed', speed, ...
-                'good', generateSpeedMask(), 'threshold', state.SpeedThreshold);
+            [trace, time] = getProcessedTrace();
+            data.behav.maskTempTrace = struct('t', time, 'trace', trace, ...
+                'good', generateTraceMask(), 'threshold', state.TraceThreshold, ...
+                'label', traceLabel('Mask trace'));
         end
         notify(data, 'MaskPreviewChanged');
     end
 
-    function removeSpeedPreview()
-        if isfield(data.behav, 'maskTempSpeed')
-            data.behav = rmfield(data.behav, 'maskTempSpeed');
+    function removeTracePreview()
+        if isfield(data.behav, 'maskTempTrace')
+            data.behav = rmfield(data.behav, 'maskTempTrace');
         end
     end
 
     function generateMaskAndClose(~, ~)
         data.behav.mask = buildCombinedMask();
         if isfield(data.behav, 'maskTemp'), data.behav = rmfield(data.behav, 'maskTemp'); end
-        removeSpeedPreview();
+        removeTracePreview();
         syncPublicState();
         notify(data, 'MaskChanged');
         close(maskFig);
@@ -1226,14 +1395,14 @@ function maskFig = mask_GUI(mousePos)
         fs = getFrameRate();
         time = data.behav.t(:);
 
-        % No speed means no automatic exclusion: start with an all-good mask.
-        if isempty(state.Speed)
+        % No trace means no automatic exclusion: start with an all-good mask.
+        if isempty(state.Trace)
             mask = true(nSamples, 1);
         else
-            mask = generateSpeedMask();
+            mask = generateTraceMask();
             if numel(mask) ~= nSamples
-                error('DrawGUI:SpeedTraceSizeMismatch', ...
-                    ['Imported speed has %d samples, but ' ...
+                error('DrawGUI:TraceSizeMismatch', ...
+                    ['Imported trace has %d samples, but ' ...
                      'behavior time vector has %d samples.'], ...
                     numel(mask), nSamples);
             end
@@ -1248,7 +1417,7 @@ function maskFig = mask_GUI(mousePos)
         if isfield(data.behav, 'maskTemp')
             data.behav = rmfield(data.behav, 'maskTemp');
         end
-        removeSpeedPreview();
+        removeTracePreview();
         notify(data, 'MaskPreviewChanged');
         delete(src);
         notify(data, 'WindowsChanged');

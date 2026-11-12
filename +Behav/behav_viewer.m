@@ -109,7 +109,7 @@ function fig = behav_viewer()
         xlim(hd.ax, old.XLim);
         delete(old);
         hd = rmfield(hd, intersect(fieldnames(hd), ...
-            {'maskSpeedGood', 'maskSpeedBad', 'maskSpeedThres'}));
+            {'maskTraceGood', 'maskTraceBad', 'maskTraceThres'}));
     end
 
     function importBodyparts(~,~)
@@ -313,8 +313,8 @@ function fig = behav_viewer()
    
     function plotTrace()
         hd = data.behav.hd;
-        % preview gone: drop the right axis with its speed plots
-        if ~hasSpeedPreview(data.behav.t) && numel(hd.ax.YAxis) > 1
+        % preview gone: drop the right axis with its mask-trace plots
+        if ~hasTracePreview(data.behav.t) && numel(hd.ax.YAxis) > 1
             hd = removeRightAxis(hd);
         end
         hold(hd.ax, 'on');
@@ -363,23 +363,23 @@ function fig = behav_viewer()
                         Shared.frame_time(data, data.currentTime), [], ...
                         '-', 'Color', style.timeline, 'HitTest', 'off');
 
-        % speed-threshold part of a mask preview, on the right y axis:
-        % speed where good and where bad, and the threshold (Shared.styles)
-        if hasSpeedPreview(t)
-            sp = data.behav.maskTempSpeed;
-            good = logical(sp.good(:));
+        % trace-threshold part of a mask preview, on the right y axis:
+        % trace where good and where bad, and the threshold (Shared.styles)
+        if hasTracePreview(t)
+            tp = data.behav.maskTempTrace;
+            good = logical(tp.good(:));
             bad = ~good;
             bad = bad | bad([1 1:end-1]) | bad([2:end end]);
-            speedGood = sp.speed(:); speedGood(~good) = NaN;
-            speedBad = sp.speed(:); speedBad(~bad) = NaN;
+            traceGood = tp.trace(:); traceGood(~good) = NaN;
+            traceBad = tp.trace(:); traceBad(~bad) = NaN;
             yyaxis(hd.ax, 'right'); hold(hd.ax, 'on');
-            hd = Shared.myPlot(@plot, hd, 'maskSpeedBad', hd.ax, sp.t, speedBad, ...
+            hd = Shared.myPlot(@plot, hd, 'maskTraceBad', hd.ax, tp.t, traceBad, ...
                 'Color', style.maskPreviewBad, 'LineStyle', '-', 'Marker', 'none', 'HitTest', 'off');
-            hd = Shared.myPlot(@plot, hd, 'maskSpeedGood', hd.ax, sp.t, speedGood, ...
+            hd = Shared.myPlot(@plot, hd, 'maskTraceGood', hd.ax, tp.t, traceGood, ...
                 'Color', style.maskPreviewGood, 'LineStyle', '-', 'Marker', 'none', 'HitTest', 'off');
-            hd = Shared.myPlot(@yline, hd, 'maskSpeedThres', hd.ax, ...
-                [], sp.threshold, '--', 'Color', style.maskPreviewThresh, 'HitTest', 'off');
-            ylabel(hd.ax, 'Mask speed (cm/s)');
+            hd = Shared.myPlot(@yline, hd, 'maskTraceThres', hd.ax, ...
+                [], tp.threshold, '--', 'Color', style.maskPreviewThresh, 'HitTest', 'off');
+            ylabel(hd.ax, tp.label);
             hd.ax.YAxis(2).Color = style.maskPreviewGood;
             yyaxis(hd.ax, 'left');
             hd.ax.YAxis(1).Color = style.leftAxisColor;   % yyaxis recolours the left axis
@@ -388,9 +388,9 @@ function fig = behav_viewer()
         data.behav.hd = hd;
     end
 
-    function tf = hasSpeedPreview(t)
-        tf = isfield(data.behav, 'maskTempSpeed') && ...
-            numel(data.behav.maskTempSpeed.speed) == numel(t);
+    function tf = hasTracePreview(t)
+        tf = isfield(data.behav, 'maskTempTrace') && ...
+            numel(data.behav.maskTempTrace.trace) == numel(t);
     end
 
     function invalidateEvents()
@@ -778,7 +778,7 @@ function fig = behav_viewer()
             % frame count changed: the mask no longer fits, start over
             data.behav.mask = true(height(tablePose), 1);
             if isfield(data.behav, 'maskTemp'), data.behav = rmfield(data.behav, 'maskTemp'); end
-            if isfield(data.behav, 'maskTempSpeed'), data.behav = rmfield(data.behav, 'maskTempSpeed'); end
+            if isfield(data.behav, 'maskTempTrace'), data.behav = rmfield(data.behav, 'maskTempTrace'); end
             notes{end+1} = 'The number of frames changed, so the mask was reset.';
         end
         updateInfo();

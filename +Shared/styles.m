@@ -38,9 +38,9 @@ S.digitalColor = C.yellow;            % digital channel, right axis
 S.maskedColor = C.blueDark;           % trace inside the mask (analysed)
 S.unmaskedColor = C.blueGrey;         % trace outside the mask
 S.threshColor = C.blueDark;           % body-part threshold (dotted)
-S.maskPreviewGood = C.black;          % mask preview speed, passing the threshold
-S.maskPreviewBad = C.grey;            % mask preview speed, failing it
-S.maskPreviewThresh = C.black;        % mask preview speed threshold (dashed)
+S.maskPreviewGood = C.black;          % mask preview trace, passing the threshold
+S.maskPreviewBad = C.grey;            % mask preview trace, failing it
+S.maskPreviewThresh = C.black;        % mask preview trace threshold (dashed)
 
 %% Event-triggered average
 S.etaColor = C.black;                 % ETA line, control mean and band

@@ -96,42 +96,57 @@ searches and peaks never span one. Each masked period is also listed as a
 
 **Edit Mask** opens the mask editor, which has two tabs.
 
-![Edit Mask window, Speed threshold tab, with speed imported from a file and its preview plot](images/mask-editor.png)
+![Edit Mask window, Trace threshold tab, with a trace imported from a file and its preview plot](images/mask-editor.png)
 
-### Speed threshold
+### Trace threshold
 
-This tab keeps only frames where the animal's speed satisfies a rule, for
-example running speed > 5 cm/s on a treadmill or in an open field.
+This tab keeps only frames where a trace satisfies a rule. The trace can be
+a body part's speed (e.g. running speed > 5 cm/s on a treadmill or in an
+open field), its X or Y position, an Ephys digital channel, or any other
+time series.
 
 | Control | Description |
 |---|---|
-| Source | `from Pose` (speed of a chosen body part, e.g. the tail base), `from File` or `from Workspace` |
-| Import Speed | Load the speed from that source |
+| Source | `from Behavior`, `from Pose`, `from Ephys`, `from File` or `from Workspace` |
+| Import Trace | Load the trace from that source |
 | Smooth / Smooth Window | Optional moving average (default 1 s) |
-| Operator / Threshold | Keep frames where speed `>` or `<` the threshold |
+| Operator / Threshold | Keep frames where the trace is `>` or `<` the threshold |
 
-Speed from a file or the workspace can be:
+The sources:
+
+| Source | Trace |
+|---|---|
+| `from Behavior` | Choose a body part, then **X**, **Y** (cm) or **Speed** (cm/s), as computed by the Behavior module |
+| `from Pose` | Choose a body part, then **X**, **Y** (pixels) or **Speed** (converted to cm/s with the Behavior resolution) |
+| `from Ephys` | Choose a digital channel. Its level (0 or 1) is read at each frame time: it changes at each rising or falling edge and holds until the next. Frames outside the ephys recording are masked out. Synchronize first so frame times are on the ephys clock; a warning is shown otherwise. Pulses shorter than a frame interval can fall between frames. |
+| `from File`, `from Workspace` | See below |
+
+A trace from a file or the workspace can be:
 
 - **A vector** with one value per video frame.
-- **A two-column matrix** `[time, speed]` on the shared clock. It is
+- **A two-column matrix** `[time, trace]` on the shared clock. It is
   interpolated onto the frame times, and frames outside its time range are
   masked out.
 
 Files may be `.mat` (a numeric variable) or `.csv`/`.txt`. Frames with no
-speed value are masked out.
+trace value are masked out. The mask always has one value per Behavior
+frame, whatever the sampling rate of the trace.
+
+Mask settings saved before this tab was renamed from *Speed threshold* still
+load.
 
 ### Manual rules
 
 This tab marks time ranges as **Good** or **Bad**. Each rule covers
 *From* ≤ *t* < *To* seconds and can be enabled or disabled. Rules are applied
-from top to bottom on top of the speed mask, so a later rule overrides an
+from top to bottom on top of the trace mask, so a later rule overrides an
 earlier one. The buttons **Add**, **Update**, **Move up**, **Move down**,
 **Duplicate**, **Delete** and **Clear all** edit the list.
 
 ### Applying
 
 - **Preview** shows the mask on the behavior trace without changing the analysis.
-  With speed data loaded, it also draws the speed on a right-hand axis (black
+  With a trace loaded, it also draws the trace on a right-hand axis (black
   where it passes the threshold, gray where it fails; manual rules are not
   included) and the threshold as a dashed black line. Click **Preview** again
   after changing settings. **Generate Mask** or **Cancel** removes the right
