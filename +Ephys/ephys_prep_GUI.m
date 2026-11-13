@@ -16,12 +16,12 @@ function fig = ephys_prep_GUI(mousePos)
     % line 1 - filter and filtfilt
     chkFilter = uicheckbox(grid1,'Text', 'Filter', 'Value', 1, 'Layout', at(1, 1), ...
         'ValueChangedFcn', @(~,~)updateEnable());
-    chkFiltFilt = uicheckbox(grid1, 'Text', 'FiltFilt', 'Value', 0, 'Layout', at(1, 2));
-
-    % line 2 - filter type, high pass and low pass frequencies
     ddFilterType = uidropdown(grid1, 'Items', {'High pass', 'Low pass', 'Band pass', 'Band stop'}, ...
         'ItemsData', {'highpass', 'lowpass', 'bandpass', 'bandstop'}, 'Value', 'highpass', ...
-        'Layout', at(2, 1), 'ValueChangedFcn', @(~,~)updateEnable());
+        'Layout', at(1, 2), 'ValueChangedFcn', @(~,~)updateEnable());
+    chkFiltFilt = uicheckbox(grid1, 'Text', 'FiltFilt', 'Value', 0, 'Layout', at(1, 3));
+
+    % line 2 - filter type, high pass and low pass frequencies
     editHighPass = uieditfield(grid1, 'numeric', 'Value', 500, 'Layout', at(2, 2));
     editLowPass = uieditfield(grid1, 'numeric', 'Value', 5000, 'Layout', at(2, 3));
 
