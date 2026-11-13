@@ -152,7 +152,9 @@ classdef SessionData < handle
         end
 
         % Called by a module window after it closed. Closing the last module
-        % window resets the session, unless all windows are being closed.
+        % window resets the session, unless all windows are being closed or
+        % the launcher is still open (it keeps the session; closing it then
+        % ends the session).
         function moduleClosed(obj)
             notify(obj, 'WindowsChanged');
             if obj.closingAll, return; end
@@ -160,6 +162,7 @@ classdef SessionData < handle
             for k = 1:numel(modules)
                 if isgraphics(obj.fig.(modules{k}), 'figure'), return; end
             end
+            if ~isempty(findall(groot, 'Type', 'figure', 'Tag', Shared.MenuBar.LauncherTag)), return; end
             delete(obj);
         end
 

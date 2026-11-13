@@ -1,7 +1,7 @@
 function fig = open_module(module)
 % fig = Shared.open_module(module)
-% Open a module window, or bring it to the front if it is open, and close
-% the launcher. module: 'video' | 'ephys' | 'pose' | 'behav' (any case).
+% Open a module window, or bring it to the front if it is open. The
+% launcher stays open. module: 'video' | 'ephys' | 'pose' | 'behav' (any case).
 
     module = lower(module);
     data = Shared.SessionData.instance();
@@ -18,5 +18,4 @@ function fig = open_module(module)
                 error('KineSync:module', 'Unknown module: %s', module);
         end
     end
-    delete(findall(groot, 'Type', 'figure', 'Tag', Shared.MenuBar.LauncherTag));
 end

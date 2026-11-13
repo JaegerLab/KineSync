@@ -28,14 +28,15 @@ KineSync('D:\my_data')   % Use data location as an optional argument.
 ```
 
 The optional argument is the folder where file dialogs first open. After that,
-KineSync remembers the folder of the last file you opened or saved. If KineSync 
-windows are already open, running `KineSync` again brings them to the front.
+KineSync remembers the folder of the last file you opened or saved. Running
+`KineSync` again brings the launcher to the front, or reopens it if it was closed.
 
 ![The launcher window with its four module buttons](images/launcher.png)
 
 The launcher has one button per module: **Video**, **Ephys**, **Pose**
-and **Behavior**. Opening a module closes the launcher. After that, launch other modules 
-from the Window menu (see below). 
+and **Behavior**. It stays open while you work, so you can open other modules
+from it or from the Window menu (see below). **Bring All to Top** raises the
+module windows only, not the launcher.
 
 ## Windows and menus
 
@@ -74,8 +75,8 @@ Pre-Process, Pose auto fix, Edit Mask, Event-Triggered Average) are listed
 indented under their module, and choosing one brings it to the front. On
 macOS the shortcuts use Cmd instead of Ctrl.
 
-When the last module window closes, the session ends and its data is cleared.
-Save the session first if you need it.
+When the last KineSync window closes (module windows and the launcher), the
+session ends and its data is cleared. Save the session first if you need it.
 
 Each module window reopens where it was last closed, also after MATLAB
 restarts. The positions are kept in the MATLAB preferences (group

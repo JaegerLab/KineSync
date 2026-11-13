@@ -133,7 +133,8 @@ cleanup = onCleanup(@()Shared.exit_all(false));
 launcher = KineSync(pwd);
 verifyEqual(testCase,S.defaultPath,pwd);
 poseFig = Shared.open_module('Pose');
-verifyFalse(testCase,isgraphics(launcher));   % opening a module closes the launcher
+verifyTrue(testCase,isgraphics(launcher));    % the launcher stays open
+verifyEqual(testCase,KineSync(),launcher);    % running KineSync again raises it
 behavFig = Shared.open_module('behav');
 verifyEqual(testCase,Shared.open_module('pose'),poseFig);   % no second window
 windowMenu = findall(behavFig,'Type','uimenu','Tag','Window');
@@ -163,7 +164,7 @@ verifyEqual(testCase,S.fig.pose,poseFig);
 S.frameRate = 30;
 Shared.exit_all(false);
 verifyFalse(testCase,isvalid(S));
-verifyFalse(testCase,isgraphics(poseFig) || isgraphics(behavFig));
+verifyFalse(testCase,isgraphics(poseFig) || isgraphics(behavFig) || isgraphics(launcher));
 verifyEmpty(testCase,findall(groot,'Type','figure','Name','KineSync Video'));
 verifyEqual(testCase,Shared.SessionData.instance().frameRate,0);
 end

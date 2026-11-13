@@ -53,7 +53,7 @@ assertSuccess(results)
 
 This checks body-part/trace switching, the mask editor without per-body-part `.trace`,
 preview versus commit, threshold persistence, all-false masks and invalidation
-after a failed calculation, and the menu bar: launcher closing, Window menu
+after a failed calculation, and the menu bar: the launcher staying open, Window menu
 checkmarks and sub-windows, and Exit all resetting the session; and that
 restoring a session replaces all module windows and brings back window
 positions, widget values, data, frame rate, time and zoom; and that ephys
@@ -69,15 +69,15 @@ It is skipped without a desktop MATLAB session.
 
 Manual checks of the menu bar and windows:
 
-- The launcher closes when a module opens from a button, the Window menu or
-  Load session; running `KineSync` while modules are open raises them instead.
+- The launcher stays open when a module opens from a button, the Window menu or
+  Load session; running `KineSync` again raises it (or reopens it if closed).
 - Window menu: checkmarks follow open modules; open sub-windows are listed,
   indented, under their module and disappear when closed; Bring All to Top
-  leaves the invoking window on top.
+  leaves the invoking window on top and never raises the launcher.
 - Close and the window's X ask before closing a module window; sub-windows
   close without asking; Exit all asks once.
-- After Exit all, or after closing the last module window, a new `KineSync`
-  has no leftover frame rate, time, zoom or path.
+- After Exit all, or after closing the last module window and the launcher, a
+  new `KineSync` has no leftover frame rate, time, zoom or path.
 - Sub-windows opened near a screen edge or on a second monitor are fully
   visible, title bar (and the ETA menu bar) included.
 - Titles show the opened file, also after Load session; file dialogs start in
